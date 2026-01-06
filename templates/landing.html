@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoodFit API - Fitness & Wellness Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .api-link:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .version {
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">💪</div>
+        <h1>GoodFit API</h1>
+        <p class="subtitle">Your Fitness & Wellness Platform Backend</p>
+
+        <div class="status">
+            <span class="status-dot"></span>
+            <span>API is running and healthy</span>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🏃</div>
+                <div class="feature-title">Activity Tracking</div>
+                <div class="feature-desc">Track workouts, runs, and fitness activities</div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <div class="feature-title">GPS Routes</div>
+                <div class="feature-desc">Record and visualize workout routes</div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">🤝</div>
+                <div class="feature-title">Social Matching</div>
+                <div class="feature-desc">Find workout partners nearby</div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">📅</div>
+                <div class="feature-title">Events</div>
+                <div class="feature-desc">Discover fitness events and challenges</div>
+            </div>
+        </div>
+
+        <a href="/api/" class="api-link">🚀 Explore API Documentation</a>
+
+        <p class="version">Version 1.0.0 | Django REST Framework</p>
+
+        <footer>
+            <p>Built with ❤️ for the fitness community</p>
+            <p style="margin-top: 10px;">
+                <a href="/admin/" style="color: #667eea; text-decoration: none;">Admin Panel</a> |
+                <a href="/api/docs/" style="color: #667eea; text-decoration: none;">API Docs</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
