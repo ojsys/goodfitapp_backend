@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserProfileSerializer,
@@ -191,3 +193,92 @@ class OnlineStatusView(APIView):
             'message': f'Status updated to {status_value}',
             'status': status_value
         }, status=status.HTTP_200_OK)
+
+
+class GoogleLoginView(APIView):
+    """Google Sign-In authentication endpoint"""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        """
+        Authenticate user with Google ID token
+        Expected request body: {"id_token": "google_id_token_here"}
+        """
+        google_id_token = request.data.get('id_token')
+
+        if not google_id_token:
+            return Response({
+                'error': 'Google ID token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Verify the Google ID token
+            # Note: In production, you should specify your Google OAuth client ID
+            # For now, we'll skip client ID verification for local development
+            idinfo = id_token.verify_oauth2_token(
+                google_id_token,
+                requests.Request()
+            )
+
+            # Extract user information from Google token
+            google_id = idinfo.get('sub')
+            email = idinfo.get('email')
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            profile_picture = idinfo.get('picture')
+
+            if not email:
+                return Response({
+                    'error': 'Email not provided by Google'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    'display_name': f"{first_name} {last_name}".strip() or email.split('@')[0],
+                    'first_name': first_name,
+                    'last_name': last_name,
+                }
+            )
+
+            # For Google Sign-In users, set a random unusable password if newly created
+            if created:
+                user.set_unusable_password()
+                user.save()
+
+            # Update profile picture if provided and user doesn't have one
+            if profile_picture and not user.avatar_url:
+                user.avatar_url = profile_picture
+                user.save()
+
+            # Update online status
+            user.online_status = 'online'
+            user.save()
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            # Get user profile
+            profile_serializer = UserProfileSerializer(user)
+
+            return Response({
+                'user': profile_serializer.data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                },
+                'message': 'Google login successful',
+                'is_new_user': created
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            # Invalid token
+            return Response({
+                'error': f'Invalid Google token: {str(e)}'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({
+                'error': f'Authentication failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

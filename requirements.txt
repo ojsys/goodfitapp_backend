@@ -9,3 +9,4 @@ pillow==11.1.0
 python-dotenv==1.0.1
 dj-database-url==2.3.0
 drf-yasg==1.21.11
+google-auth==2.36.0
