@@ -12,6 +12,7 @@ leave them if you still deploy there, or delete them if you do not.
 | `goodfit_api/settings/cpanel.py` | Settings tuned for shared hosting. |
 | `.env.cpanel.example` | Template for the real `.env`. |
 | `deploy_cpanel.sh` | Install, check, migrate, collectstatic, restart. |
+| `check_env.py` | Diagnostic: shows how `.env` resolves and tests the DB connection. |
 
 ## 1. Create the PostgreSQL database
 
@@ -122,6 +123,35 @@ does, straight off disk.
 
 **`ModuleNotFoundError` for a package you installed.** You installed it outside
 the app's virtualenv. Re-enter it with the command from Setup Python App.
+
+**`ValueError: Port could not be cast to integer value as '<your password>'`**
+A value has landed in the wrong key in `.env` — typically the password ending
+up where the port belongs. Run the diagnostic:
+
+```bash
+python check_env.py
+```
+
+It prints every setting as Django actually resolves it (password masked) and
+flags stray quotes, surrounding whitespace and embedded line breaks, then tries
+a real database connection. Common causes:
+
+The usual cause is a **`#` in the database password**. When the connection was
+assembled into a URL, `#` began the URL *fragment*, so everything after it —
+including `@host:port/name` — was discarded, leaving the password sitting where
+the port should be. Other characters that used to break the URL: `@ : / %`.
+
+This no longer applies: the settings build a plain dict and never assemble a
+URL, so any password character is safe and needs no escaping.
+
+Other things the diagnostic catches:
+
+* The password pasted across two lines, so the second line became the next
+  key's value.
+* Values wrapped in quotes — `.env` needs `DB_PORT=5432`, not `DB_PORT="5432"`.
+
+Note that passwords containing `@ : / # %` are fine now: the settings build the
+connection as a plain dict and never assemble a URL, so nothing needs escaping.
 
 ---
 

@@ -18,13 +18,47 @@ SECRET_KEY = config('SECRET_KEY')
 if SECRET_KEY == 'django-insecure-change-this-in-production':
     raise ValueError("SECRET_KEY must be set in production!")
 
-# Database - Use DATABASE_URL or individual settings
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default=None) or
-        f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
-    )
-}
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
+# DATABASE_URL wins when set. Otherwise the connection is built from the
+# individual DB_* settings as a plain dict.
+#
+# It is deliberately NOT assembled into a URL string: a password containing
+# any of @ : / # % — which cPanel-generated passwords routinely do — corrupts
+# the URL and surfaces as a baffling parse error somewhere else in the string,
+# such as the password being read as the port. Passing the fields straight
+# through to the driver needs no escaping and cannot be mis-split.
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    DATABASES = {'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+else:
+    DB_PORT = config('DB_PORT', default='5432')
+
+    # A non-numeric port almost always means a .env line is in the wrong slot,
+    # so say that plainly instead of failing later inside a URL parser.
+    if not str(DB_PORT).strip().isdigit():
+        raise ValueError(
+            f"DB_PORT must be a number, got {DB_PORT!r}. "
+            "Check that DB_PORT, DB_PASSWORD and DB_HOST are on their own "
+            "lines in .env and none of the values have been pasted into the "
+            "wrong key."
+        )
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': str(DB_PORT).strip(),
+            # Reuse connections instead of reconnecting on every request;
+            # shared hosts are slow to open new ones.
+            'CONN_MAX_AGE': 600,
+        }
+    }
 
 # CORS Settings for Production
 CORS_ALLOWED_ORIGINS = config(
