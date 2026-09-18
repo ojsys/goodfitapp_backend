@@ -28,6 +28,11 @@ class ActivityListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Get activities for current user"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Activity.objects.none()
         queryset = Activity.objects.filter(user=self.request.user)
 
         # Filter by type
@@ -57,6 +62,11 @@ class ActivityDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ActivitySerializer
 
     def get_queryset(self):
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Activity.objects.none()
         return Activity.objects.filter(user=self.request.user)
 
 
@@ -67,6 +77,11 @@ class RecentActivitiesView(generics.ListAPIView):
     serializer_class = ActivityListSerializer
 
     def get_queryset(self):
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Activity.objects.none()
         thirty_days_ago = timezone.now() - timedelta(days=30)
         return Activity.objects.filter(
             user=self.request.user,
@@ -124,6 +139,11 @@ class DailySummaryListView(generics.ListAPIView):
     serializer_class = DailySummarySerializer
 
     def get_queryset(self):
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return DailySummary.objects.none()
         # Get summaries for last 30 days by default
         days = int(self.request.query_params.get('days', 30))
         start_date = timezone.now().date() - timedelta(days=days)

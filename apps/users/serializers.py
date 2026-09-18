@@ -50,6 +50,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+        # Two apps define a `UserProfileSerializer`; an explicit ref_name keeps
+        # them distinct in the OpenAPI schema, which otherwise fails to build.
+        ref_name = 'AccountProfile'
         fields = [
             'id', 'email', 'display_name', 'first_name', 'last_name', 'full_name',
             'avatar_url', 'avatar', 'photo_url', 'bio', 'online_status',

@@ -32,6 +32,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get user profiles"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return UserProfile.objects.none()
         return UserProfile.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
@@ -206,6 +211,11 @@ class SwipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get swipes made by current user"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Swipe.objects.none()
         return Swipe.objects.filter(from_user=self.request.user)
 
     def get_serializer_class(self):
@@ -263,6 +273,11 @@ class MatchViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Get matches for current user"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Match.objects.none()
         return Match.objects.filter(
             Q(user1=self.request.user) | Q(user2=self.request.user),
             is_active=True

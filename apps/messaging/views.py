@@ -29,6 +29,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get conversations for current user"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Conversation.objects.none()
         user = self.request.user
         return Conversation.objects.filter(
             Q(participant1=user) | Q(participant2=user),
@@ -114,6 +119,11 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get messages for conversations user is part of"""
+        # drf-yasg builds the schema with an unauthenticated fake request,
+        # so anything filtering on self.request.user must short-circuit or
+        # schema generation raises (and /swagger/ returns 500).
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
         user = self.request.user
 
         # Get conversation ID from query params

@@ -19,6 +19,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
+        # See the note on AccountProfile in apps/users/serializers.py.
+        ref_name = 'MatchingProfile'
         fields = [
             'id',
             'user_id',
