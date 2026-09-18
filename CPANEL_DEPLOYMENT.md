@@ -80,6 +80,20 @@ Create your admin user once:
 python manage.py createsuperuser
 ```
 
+## Useful URLs once deployed
+
+| URL | What it is |
+|---|---|
+| `/` | Landing page |
+| `/api/` | Redirects to the Swagger UI |
+| `/swagger/` | Browsable API documentation |
+| `/redoc/` | Alternative documentation |
+| `/admin/` | Django admin |
+| `/api/auth/`, `/api/activities/`, `/api/events/`, `/api/matching/`, `/api/messaging/` | The API itself |
+
+Note that `/swagger/` is public. That is convenient while building, but it
+publishes your whole API surface -- worth restricting before launch.
+
 ## 6. Point the mobile app at it
 
 In `mygoodfit_app/lib/services/api_service.dart`, change `baseUrl` from

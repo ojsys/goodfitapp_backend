@@ -39,7 +39,8 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # API Endpoints
-    # An index at /api/ so the bare path reports status instead of 404ing.
+    # /api/ has no resource of its own. Return a JSON index rather than a bare
+    # 404, so the path reports status and links on to the docs.
     path('api/', api_root, name='api-root'),
     path('api/auth/', include('apps.users.urls')),
     path('api/activities/', include('apps.activities.urls')),
