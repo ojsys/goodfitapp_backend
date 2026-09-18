@@ -92,13 +92,15 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         - Fitness level compatibility
         - Shared activities/goals
         """
-        try:
-            current_profile = UserProfile.objects.get(user=request.user)
-        except UserProfile.DoesNotExist:
-            return Response(
-                {'error': 'Please complete your profile first'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # A matching profile is created on demand rather than demanded up front.
+        # Nothing in the app creates one, so requiring it here meant every new
+        # account saw an error on Fit Buddies with no way to resolve it. The
+        # defaults are permissive, so discovery works immediately and the user
+        # can refine the profile later.
+        current_profile, _ = UserProfile.objects.get_or_create(
+            user=request.user,
+            defaults={'is_active': True},
+        )
 
         # Get users already swiped on
         swiped_user_ids = Swipe.objects.filter(from_user=request.user).values_list('to_user_id', flat=True)
