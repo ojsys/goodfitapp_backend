@@ -23,6 +23,7 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.events.models import Event
 from apps.matching.models import UserProfile as MatchingProfile
+from apps.messaging.models import Conversation, Message
 
 User = get_user_model()
 
@@ -71,6 +72,22 @@ DEMO_PEOPLE = [
     ('Sam Kwon', 29, 'other', 'Manhattan, NY', 'advanced',
      ['Run', 'Swim'], ['Endurance'],
      'Early mornings only. Sorry.'),
+]
+
+# Opening exchanges, so the chat tab has real threads to test against.
+CONVERSATIONS = [
+    [
+        ('them', 'Morning! Still on for the park loop Saturday?'),
+        ('me', 'Yes -- 7am at the gate?'),
+        ('them', 'Perfect. I will bring a spare tube just in case.'),
+    ],
+    [
+        ('them', 'That tempo session looked quick. What pace were you holding?'),
+        ('me', 'Around 7:30s. Felt harder than it looked.'),
+    ],
+    [
+        ('them', 'Fancy an easy recovery walk later in the week?'),
+    ],
 ]
 
 EVENTS = [
@@ -155,7 +172,8 @@ class Command(BaseCommand):
         created = 0
 
         if options['people']:
-            self._seed_people(now, rng)
+            self._seed_people(user, now, rng)
+            self._seed_conversations(user, now)
 
         wanted = min(options['activities'], len(SESSIONS))
         for index in range(wanted):
@@ -211,12 +229,28 @@ class Command(BaseCommand):
             f'\nRemove them later with:  python manage.py seed_demo --email {email} --clear'
         ))
 
-    def _seed_people(self, now, rng):
+    def _seed_people(self, user, now, rng):
         """Create shared demo accounts with matching profiles and activities.
 
         These belong to nobody in particular -- they exist so a brand-new user
         sees a populated app instead of empty screens.
+
+        They are placed near the seeded account, because discovery filters by
+        distance: people seeded at a fixed location are invisible to anyone
+        living elsewhere, which looks identical to the feature being broken.
         """
+        anchor_lat, anchor_lng = CENTRE_LAT, CENTRE_LNG
+        anchor_city = 'Brooklyn, NY'
+
+        profile = MatchingProfile.objects.filter(user=user).first()
+        if profile and profile.latitude and profile.longitude:
+            anchor_lat, anchor_lng = profile.latitude, profile.longitude
+            anchor_city = profile.location_city or anchor_city
+            self.stdout.write(
+                f'Placing demo people near {anchor_city} '
+                f'({anchor_lat:.3f}, {anchor_lng:.3f})'
+            )
+
         self.stdout.write('App-wide demo people:')
 
         for index, (name, age, gender, city, level, activities, goals, prompt) \
@@ -237,14 +271,16 @@ class Command(BaseCommand):
                 defaults={
                     'age': age,
                     'gender': gender,
-                    'location_city': city,
+                    'location_city': anchor_city,
                     'fitness_level': level,
                     'favorite_activities': activities,
                     'fitness_goals': goals,
                     'looking_for': ['workout_partner'],
                     'prompt_question': prompt,
-                    'latitude': CENTRE_LAT + rng.uniform(-0.05, 0.05),
-                    'longitude': CENTRE_LNG + rng.uniform(-0.05, 0.05),
+                    # Within roughly three miles, so they clear the default
+                    # 25-mile discovery radius comfortably.
+                    'latitude': anchor_lat + rng.uniform(-0.04, 0.04),
+                    'longitude': anchor_lng + rng.uniform(-0.04, 0.04),
                     'is_active': True,
                 },
             )
@@ -270,6 +306,49 @@ class Command(BaseCommand):
                     )
 
             self.stdout.write(f'  person: {name} ({"created" if was_created else "updated"})')
+
+    def _seed_conversations(self, user, now):
+        """Give the account a few threads with the demo people."""
+        people = list(
+            User.objects.filter(email__endswith=f'@{DEMO_DOMAIN}').order_by('pk')
+        )
+        if not people:
+            return
+
+        self.stdout.write('Conversations:')
+        for index, script in enumerate(CONVERSATIONS):
+            if index >= len(people):
+                break
+            other = people[index]
+
+            # get_or_create on the pair keeps re-runs from stacking duplicates.
+            conversation, created = Conversation.objects.get_or_create(
+                participant1=user, participant2=other,
+            )
+            if not created and conversation.messages.exists():
+                self.stdout.write(f'  thread with {other.display_name} (exists)')
+                continue
+
+            for offset, (who, text) in enumerate(script):
+                Message.objects.create(
+                    conversation=conversation,
+                    sender=user if who == 'me' else other,
+                    text=text,
+                    # Space them a few minutes apart so the thread reads in
+                    # order and the day dividers make sense.
+                    created_at=now - timedelta(hours=index + 1, minutes=10 - offset * 3),
+                )
+
+            last = conversation.messages.order_by('-created_at').first()
+            if last:
+                conversation.last_message_text = last.text
+                conversation.last_message_at = last.created_at
+                conversation.last_message_sender = last.sender
+                conversation.save(update_fields=[
+                    'last_message_text', 'last_message_at', 'last_message_sender',
+                ])
+
+            self.stdout.write(f'  thread with {other.display_name}')
 
     def _clear(self, user):
         activities = Activity.objects.filter(user=user, notes__contains=MARKER)

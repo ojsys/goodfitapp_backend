@@ -5,7 +5,7 @@ URL patterns for Activities
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    ActivityListCreateView, ActivityDetailView, RecentActivitiesView,
+    ActivityListCreateView, ActivityDetailView, RecentActivitiesView, FeedView,
     ActivityStatsView, DailySummaryListView, TodaySummaryView,
     UpdateDailySummaryView
 )
@@ -22,6 +22,7 @@ urlpatterns = [
     path('', ActivityListCreateView.as_view(), name='activity-list-create'),
     path('<int:pk>/', ActivityDetailView.as_view(), name='activity-detail'),
     path('recent/', RecentActivitiesView.as_view(), name='recent-activities'),
+    path('feed/', FeedView.as_view(), name='activity-feed'),
     path('stats/', ActivityStatsView.as_view(), name='activity-stats'),
 
     # Daily Summaries

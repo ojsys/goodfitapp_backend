@@ -5,14 +5,14 @@ Views for Activity management
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Count, Sum, Avg, Max
+from django.db.models import Count, Sum, Avg, Max, Q
 from datetime import datetime, timedelta
 from django.utils import timezone
 
 from .models import Activity, DailySummary
 from .serializers import (
     ActivitySerializer, ActivityListSerializer, ActivityCreateSerializer,
-    DailySummarySerializer, ActivityStatsSerializer
+    DailySummarySerializer, ActivityStatsSerializer, FeedActivitySerializer
 )
 
 
@@ -196,3 +196,78 @@ class UpdateDailySummaryView(APIView):
 
         serializer = DailySummarySerializer(summary)
         return Response(serializer.data)
+
+
+class FeedView(generics.ListAPIView):
+    """The social feed.
+
+    `scope` selects what to show:
+
+    * `you`        - your own activities
+    * `following`  - activities from people you have matched with
+    * `discover`   - recent activities from other people with public profiles
+
+    `following` falls back to `discover` when you have no connections yet.
+    Without that fallback a new account opens to an empty feed, which reads as
+    a broken app rather than an empty social graph.
+
+    Only activities from users whose profile visibility is public are shown to
+    anyone else; your own always are.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FeedActivitySerializer
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Activity.objects.none()
+
+        from apps.matching.models import Match
+
+        user = self.request.user
+        scope = self.request.query_params.get('scope', 'following')
+
+        if scope == 'you':
+            return (
+                Activity.objects.filter(user=user)
+                .select_related('user')
+                .order_by('-start_time')[:50]
+            )
+
+        if scope == 'following':
+            matches = Match.objects.filter(is_active=True).filter(
+                Q(user1=user) | Q(user2=user)
+            )
+            connection_ids = set()
+            for match in matches:
+                connection_ids.add(
+                    match.user2_id if match.user1_id == user.id else match.user1_id
+                )
+
+            if connection_ids:
+                return (
+                    Activity.objects.filter(user_id__in=connection_ids)
+                    .filter(self._visible_to_others())
+                    .select_related('user')
+                    .order_by('-start_time')[:50]
+                )
+            # No connections yet: fall through to discover.
+
+        return (
+            Activity.objects.exclude(user=user)
+            .filter(self._visible_to_others())
+            .select_related('user')
+            .order_by('-start_time')[:50]
+        )
+
+    @staticmethod
+    def _visible_to_others():
+        """Only surface activities from accounts set to public.
+
+        An account with no preferences row has never opted out, and the model
+        default is public, so treat a missing row as public too.
+        """
+        return (
+            Q(user__preferences__profile_visibility='public')
+            | Q(user__preferences__isnull=True)
+        )

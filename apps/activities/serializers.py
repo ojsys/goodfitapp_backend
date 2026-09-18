@@ -181,3 +181,31 @@ class GPSPointSerializer(serializers.Serializer):
     altitude = serializers.FloatField(required=False, allow_null=True)
     speed = serializers.FloatField(required=False, allow_null=True)
     accuracy = serializers.FloatField(required=False, allow_null=True)
+
+
+class FeedActivitySerializer(ActivityListSerializer):
+    """An activity in the social feed.
+
+    Adds the author, which the plain list serializer omits because that one
+    only ever returns the requesting user's own activities.
+    """
+
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    user_photo = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+
+    class Meta(ActivityListSerializer.Meta):
+        fields = ActivityListSerializer.Meta.fields + [
+            'user_id', 'user_name', 'user_photo', 'is_mine',
+        ]
+
+    def get_user_name(self, obj):
+        return obj.user.display_name or obj.user.email.split('@')[0]
+
+    def get_user_photo(self, obj):
+        return obj.user.photo_url(self.context.get('request'))
+
+    def get_is_mine(self, obj):
+        request = self.context.get('request')
+        return bool(request and obj.user_id == request.user.id)
