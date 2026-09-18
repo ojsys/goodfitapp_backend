@@ -15,7 +15,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     user_id = serializers.IntegerField(source='user.id', read_only=True)
     display_name = serializers.CharField(source='user.display_name', read_only=True)
-    profile_photo = serializers.CharField(source='user.avatar_url', read_only=True)
+    profile_photo = serializers.SerializerMethodField()
+
+    def get_profile_photo(self, obj):
+        """Uploaded avatar when there is one, else the linked URL."""
+        user = getattr(obj, 'user', obj)
+        return user.photo_url(self.context.get('request'))
 
     class Meta:
         model = UserProfile
@@ -79,7 +84,12 @@ class MatchedUserSerializer(serializers.ModelSerializer):
 
     user_id = serializers.IntegerField(source='user.id', read_only=True)
     display_name = serializers.CharField(source='user.display_name', read_only=True)
-    profile_photo = serializers.CharField(source='user.avatar_url', read_only=True)
+    profile_photo = serializers.SerializerMethodField()
+
+    def get_profile_photo(self, obj):
+        """Uploaded avatar when there is one, else the linked URL."""
+        user = getattr(obj, 'user', obj)
+        return user.photo_url(self.context.get('request'))
     distance = serializers.SerializerMethodField()
 
     class Meta:
@@ -166,9 +176,15 @@ class MatchSerializer(serializers.ModelSerializer):
     """Serializer for matches"""
 
     user1_name = serializers.CharField(source='user1.display_name', read_only=True)
-    user1_photo = serializers.CharField(source='user1.avatar_url', read_only=True)
+    user1_photo = serializers.SerializerMethodField()
+
+    def get_user1_photo(self, obj):
+        return obj.user1.photo_url(self.context.get('request'))
+
+    def get_user2_photo(self, obj):
+        return obj.user2.photo_url(self.context.get('request'))
     user2_name = serializers.CharField(source='user2.display_name', read_only=True)
-    user2_photo = serializers.CharField(source='user2.avatar_url', read_only=True)
+    user2_photo = serializers.SerializerMethodField()
     other_user = serializers.SerializerMethodField()
 
     class Meta:

@@ -12,10 +12,14 @@ This is sample data, not real history. Use it to see the app populated; clear
 it before the account belongs to an actual person.
 """
 
+import io
 import math
+import os
 import random
 from datetime import timedelta
 
+from django.core.files.base import ContentFile
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -57,21 +61,36 @@ SESSIONS = [
 # does not open to an empty screen. Names are ordinary on purpose -- a card
 # reading "Demo User 1" makes the whole app look unfinished.
 DEMO_PEOPLE = [
-    ('Marvel Marcel', 28, 'male', 'Brooklyn, NY', 'intermediate',
+    ('Marvel Marcel', 28, 'male', 'intermediate',
      ['Cycle', 'Run'], ['Endurance'],
      'Ask me about my post-ride bagel order.'),
-    ('Shari Brown', 31, 'female', 'Brooklyn, NY', 'advanced',
+    ('Shari Brown', 31, 'female', 'advanced',
      ['Run', 'Yoga'], ['Stay Healthy'],
      'Training for my third marathon, slowly.'),
-    ('Drew Bennett', 26, 'male', 'Queens, NY', 'intermediate',
+    ('Drew Bennett', 26, 'male', 'intermediate',
      ['Cycle', 'Strength'], ['Build Muscle'],
      'Will ride any distance for good coffee.'),
-    ('Nia Cole', 34, 'female', 'Brooklyn, NY', 'beginner',
+    ('Nia Cole', 34, 'female', 'beginner',
      ['Walk', 'Yoga'], ['Stay Healthy'],
      'Just started and looking for gentle company.'),
-    ('Sam Kwon', 29, 'other', 'Manhattan, NY', 'advanced',
+    ('Sam Kwon', 29, 'other', 'advanced',
      ['Run', 'Swim'], ['Endurance'],
      'Early mornings only. Sorry.'),
+    ('Priya Raman', 27, 'female', 'intermediate',
+     ['Run', 'Strength'], ['Build Muscle'],
+     'Parkrun every Saturday, rain or shine.'),
+    ('Tom Okafor', 35, 'male', 'beginner',
+     ['Walk', 'Cycle'], ['Lose Weight'],
+     'Getting back into it after a long break.'),
+    ('Elena Duarte', 30, 'female', 'advanced',
+     ['Swim', 'Cycle'], ['Endurance'],
+     'Triathlon in the spring. Send help.'),
+    ('Jonas Meyer', 24, 'male', 'intermediate',
+     ['Strength', 'Run'], ['Build Muscle'],
+     'Gym in the morning, trails at the weekend.'),
+    ('Aisha Bello', 32, 'female', 'intermediate',
+     ['Yoga', 'Walk'], ['Stay Healthy'],
+     'Sunrise yoga is the best part of my day.'),
 ]
 
 # Opening exchanges, so the chat tab has real threads to test against.
@@ -100,6 +119,124 @@ EVENTS = [
     ('Saturday Coffee Social', 'A Good Fit', 'Social',
      'Grand Army Plaza', 'Grand Army Plaza, Brooklyn, NY', None),
 ]
+
+
+# The Earth palette, so generated imagery matches the app rather than looking
+# like stock filler dropped in from elsewhere.
+AVATAR_RAMPS = [
+    ((150, 168, 104), (94, 114, 51)),
+    ((209, 154, 108), (166, 95, 46)),
+    ((192, 149, 124), (138, 92, 70)),
+    ((169, 181, 131), (110, 128, 70)),
+    ((212, 168, 140), (177, 112, 90)),
+    ((143, 165, 160), (92, 122, 115)),
+]
+
+FONT_CANDIDATES = [
+    os.path.join(
+        os.path.dirname(__file__),
+        '../../../../../mygoodfit_app/assets/fonts/PlayfairDisplay-Bold.ttf',
+    ),
+    '/System/Library/Fonts/Supplemental/Georgia Bold.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
+    '/usr/share/fonts/dejavu/DejaVuSerif-Bold.ttf',
+]
+
+
+def _font(size):
+    """The nicest serif available, falling back to Pillow's bitmap font.
+
+    Hosts differ wildly in what fonts they ship, and a missing font should
+    degrade the image rather than fail the whole seed.
+    """
+    from PIL import ImageFont
+
+    for path in FONT_CANDIDATES:
+        resolved = os.path.abspath(path)
+        if os.path.exists(resolved):
+            try:
+                return ImageFont.truetype(resolved, size)
+            except OSError:
+                continue
+    return ImageFont.load_default()
+
+
+def _gradient(size, top, bottom, diagonal=True):
+    """A simple linear gradient image."""
+    from PIL import Image
+
+    width, height = size
+    base = Image.new('RGB', (width, height))
+    pixels = base.load()
+    span = (width + height) if diagonal else height
+
+    for y in range(height):
+        for x in range(width):
+            t = ((x + y) / span) if diagonal else (y / max(height - 1, 1))
+            pixels[x, y] = (
+                int(top[0] + (bottom[0] - top[0]) * t),
+                int(top[1] + (bottom[1] - top[1]) * t),
+                int(top[2] + (bottom[2] - top[2]) * t),
+            )
+    return base
+
+
+def make_avatar(name, index, size=400):
+    """A circular-ready avatar: initials over a palette gradient.
+
+    Generated rather than pulled from a stock-photo service: these are
+    invented people, and putting a real person's face on a fabricated profile
+    is not something to do casually.
+    """
+    from PIL import ImageDraw
+
+    top, bottom = AVATAR_RAMPS[index % len(AVATAR_RAMPS)]
+    image = _gradient((size, size), top, bottom)
+    draw = ImageDraw.Draw(image)
+
+    initials = ''.join(part[0] for part in name.split()[:2]).upper()
+    font = _font(int(size * 0.38))
+    box = draw.textbbox((0, 0), initials, font=font)
+    draw.text(
+        ((size - (box[2] - box[0])) / 2 - box[0],
+         (size - (box[3] - box[1])) / 2 - box[1]),
+        initials,
+        font=font,
+        fill=(255, 255, 255),
+    )
+
+    buffer = io.BytesIO()
+    image.save(buffer, 'PNG')
+    return buffer.getvalue()
+
+
+def make_cover(title, index, size=(1200, 800)):
+    """An event cover: gradient with the event name set in serif."""
+    from PIL import ImageDraw
+
+    top, bottom = AVATAR_RAMPS[(index + 2) % len(AVATAR_RAMPS)]
+    image = _gradient(size, top, bottom, diagonal=False)
+    draw = ImageDraw.Draw(image)
+
+    # Darken the lower half so the title stays legible.
+    width, height = size
+    for y in range(height // 2, height):
+        alpha = (y - height // 2) / (height / 2)
+        draw.line(
+            [(0, y), (width, y)],
+            fill=(
+                int(top[0] * (1 - alpha * 0.55)),
+                int(top[1] * (1 - alpha * 0.55)),
+                int(top[2] * (1 - alpha * 0.55)),
+            ),
+        )
+
+    font = _font(72)
+    draw.text((64, height - 180), title, font=font, fill=(255, 255, 255))
+
+    buffer = io.BytesIO()
+    image.save(buffer, 'PNG')
+    return buffer.getvalue()
 
 
 def build_route(distance_metres, started_at, duration_minutes, rng):
@@ -147,6 +284,13 @@ class Command(BaseCommand):
             help='How many activities to create (default 8)',
         )
         parser.add_argument(
+            '--base-url', default='http://127.0.0.1:8000',
+            help=(
+                'Origin used to build absolute image URLs, e.g. '
+                'https://goodfit.example.com'
+            ),
+        )
+        parser.add_argument(
             '--people', action='store_true',
             help=(
                 'Also create app-wide demo people so every account has '
@@ -169,6 +313,7 @@ class Command(BaseCommand):
 
         rng = random.Random(user.pk)
         now = timezone.now()
+        base_url = options['base_url']
         created = 0
 
         if options['people']:
@@ -205,9 +350,24 @@ class Command(BaseCommand):
 
         for offset, (title, host_name, vibe, place, address, cap) in enumerate(EVENTS):
             start = now + timedelta(days=offset + 1, hours=rng.randint(0, 5))
+
+            # Covers are written straight into MEDIA_ROOT; image_url needs an
+            # absolute URL because the app loads it over the network.
+            cover_url = ''
+            media_root = getattr(settings, 'MEDIA_ROOT', '')
+            if media_root:
+                folder = os.path.join(media_root, 'events')
+                os.makedirs(folder, exist_ok=True)
+                filename = f'demo-event-{offset}.png'
+                with open(os.path.join(folder, filename), 'wb') as handle:
+                    handle.write(make_cover(title, offset))
+                media_url = getattr(settings, 'MEDIA_URL', '/media/')
+                cover_url = f"{base_url.rstrip('/')}{media_url}events/{filename}"
+
             Event.objects.create(
                 title=title,
                 description=f'Sample event for demo purposes. {MARKER}',
+                image_url=cover_url,
                 host=user,
                 host_name=host_name,
                 vibe=vibe,
@@ -253,7 +413,7 @@ class Command(BaseCommand):
 
         self.stdout.write('App-wide demo people:')
 
-        for index, (name, age, gender, city, level, activities, goals, prompt) \
+        for index, (name, age, gender, level, activities, goals, prompt) \
                 in enumerate(DEMO_PEOPLE):
             email = f"{name.split()[0].lower()}.{index}@{DEMO_DOMAIN}"
             person, was_created = User.objects.get_or_create(
@@ -265,6 +425,15 @@ class Command(BaseCommand):
                 # not signed into.
                 person.set_unusable_password()
                 person.save(update_fields=['password'])
+
+            # Give them a face so the photo path is exercised, not just the
+            # initials fallback.
+            if not person.avatar:
+                person.avatar.save(
+                    f'demo-{index}.png',
+                    ContentFile(make_avatar(name, index)),
+                    save=True,
+                )
 
             MatchingProfile.objects.update_or_create(
                 user=person,
