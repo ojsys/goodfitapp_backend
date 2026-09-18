@@ -33,13 +33,47 @@ class ActivitySerializer(serializers.ModelSerializer):
 class ActivityListSerializer(serializers.ModelSerializer):
     """Minimal serializer for activity lists"""
 
+    route_preview = serializers.SerializerMethodField()
+
     class Meta:
         model = Activity
         fields = [
             'id', 'type', 'title', 'start_time', 'duration',
-            'distance', 'calories_burned', 'created_at'
+            'distance', 'calories_burned', 'elevation_gain',
+            'route_preview', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    # A recorded route can run to thousands of points, which is far too much
+    # to send for every card in a feed. Clients only need enough shape to draw
+    # a small map, so send an evenly spaced sample and keep the full track on
+    # the detail endpoint.
+    PREVIEW_POINTS = 40
+
+    def get_route_preview(self, obj):
+        route = obj.route
+        if not route:
+            return None
+
+        total = len(route)
+        if total <= self.PREVIEW_POINTS:
+            sampled = route
+        else:
+            step = (total - 1) / (self.PREVIEW_POINTS - 1)
+            sampled = [route[round(i * step)] for i in range(self.PREVIEW_POINTS)]
+
+        # Coordinates only — altitude, speed and timestamps are not needed to
+        # draw the shape and roughly halve the payload.
+        preview = []
+        for point in sampled:
+            if not isinstance(point, dict):
+                continue
+            lat = point.get('latitude', point.get('lat'))
+            lng = point.get('longitude', point.get('lng'))
+            if lat is None or lng is None:
+                continue
+            preview.append({'latitude': lat, 'longitude': lng})
+        return preview or None
 
 
 class ActivityCreateSerializer(serializers.ModelSerializer):
