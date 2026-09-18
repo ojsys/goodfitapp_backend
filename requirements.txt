@@ -12,3 +12,7 @@ dj-database-url==2.3.0
 drf-yasg==1.21.11
 google-auth==2.36.0
 requests==2.34.2
+
+# Optional but recommended: enables the Argon2 password hasher in production.
+# Without it the settings fall back to PBKDF2 rather than failing at login.
+argon2-cffi==23.1.0

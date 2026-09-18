@@ -35,8 +35,14 @@ CORS_ALLOWED_ORIGINS = config(
 # Never allow all origins in production
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Security Settings - ALWAYS ENABLED IN PRODUCTION
-SECURE_SSL_REDIRECT = True
+# Security Settings
+#
+# Behind Apache/Passenger the request reaches Django over plain HTTP, so
+# without this header Django believes every request is insecure and
+# SECURE_SSL_REDIRECT redirects forever. Disable the redirect only if the
+# web server already handles it.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_BROWSER_XSS_FILTER = True
@@ -47,17 +53,32 @@ SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = 'DENY'
 
 # CSRF Settings
+# Django 4+ requires the scheme, e.g. https://api.example.com
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config('CSRF_TRUSTED_ORIGINS', default='').split(',')
+    if origin.strip()
+]
+
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
 
-# Password hashers (use stronger ones in production)
+# Password hashers.
+#
+# Argon2 is preferred, but it needs the `argon2-cffi` package — and if that is
+# missing, Django raises on every login and signup. Shared hosts do not always
+# have it, so it is only put first when it can actually be imported.
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
+
+try:
+    import argon2  # noqa: F401
+    PASSWORD_HASHERS.insert(0, 'django.contrib.auth.hashers.Argon2PasswordHasher')
+except ImportError:
+    pass
 
 # Email backend for production
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -137,13 +158,33 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
     'rest_framework.renderers.JSONRenderer',
 ]
 
-# Cache (use Redis or Memcached in production)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+# Cache.
+#
+# Redis is used when REDIS_URL is set and the client library is installed.
+# Otherwise fall back to per-process local memory, which is correct (if not
+# shared between workers) and never fails at runtime the way a missing Redis
+# does.
+REDIS_URL = config('REDIS_URL', default='')
+
+if REDIS_URL:
+    try:
+        import redis  # noqa: F401
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': REDIS_URL,
+            }
+        }
+    except ImportError:
+        REDIS_URL = ''
+
+if not REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'goodfit-cache',
+        }
     }
-}
 
 # Admin configuration
 ADMINS = [
