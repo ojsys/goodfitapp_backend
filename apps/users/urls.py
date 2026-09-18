@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
-    ProfileView, UpdateProfileView, ChangePasswordView,
+    ProfileView, UpdateProfileView, ChangePasswordView, AvatarUploadView,
     UserGoalsView, UserStatsView, UserPreferencesView,
     OnlineStatusView
 )
@@ -25,6 +25,7 @@ urlpatterns = [
     # Profile Management
     path('profile/', ProfileView.as_view(), name='profile'),
     path('profile/update/', UpdateProfileView.as_view(), name='update-profile'),
+    path('profile/avatar/', AvatarUploadView.as_view(), name='profile-avatar'),
     path('password/change/', ChangePasswordView.as_view(), name='change-password'),
 
     # User Goals, Stats, and Preferences

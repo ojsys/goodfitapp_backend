@@ -5,6 +5,7 @@ Views for User authentication and management
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from google.oauth2 import id_token
@@ -282,3 +283,60 @@ class GoogleLoginView(APIView):
             return Response({
                 'error': f'Authentication failed: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AvatarUploadView(APIView):
+    """Upload or remove the signed-in user's profile photo.
+
+    POST with multipart form-data under `avatar`. DELETE removes the current
+    photo. Responds with the resolved `photo_url` so the client can show the
+    new image straight away.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    MAX_BYTES = 5 * 1024 * 1024
+    ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/heic', 'image/webp'}
+
+    def post(self, request):
+        upload = request.FILES.get('avatar')
+        if upload is None:
+            return Response(
+                {'detail': 'No file was provided under "avatar".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if upload.size > self.MAX_BYTES:
+            return Response(
+                {'detail': 'Image must be 5 MB or smaller.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        content_type = (upload.content_type or '').lower()
+        if content_type not in self.ALLOWED_TYPES:
+            return Response(
+                {'detail': 'Use a JPEG, PNG, WebP or HEIC image.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        # Drop the previous file so uploads do not pile up in media storage.
+        if user.avatar:
+            user.avatar.delete(save=False)
+
+        user.avatar = upload
+        user.save(update_fields=['avatar', 'updated_at'])
+
+        return Response(
+            {'photo_url': user.photo_url(request)},
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request):
+        user = request.user
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=['avatar', 'updated_at'])
+        return Response({'photo_url': user.photo_url(request)})

@@ -42,6 +42,7 @@ class UserPreferencesSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for User Profile (Full details)"""
 
+    photo_url = serializers.SerializerMethodField()
     goals = UserGoalsSerializer(read_only=True)
     stats = UserStatsSerializer(read_only=True)
     preferences = UserPreferencesSerializer(read_only=True)
@@ -51,20 +52,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'display_name', 'first_name', 'last_name', 'full_name',
-            'avatar_url', 'bio', 'online_status', 'last_seen',
+            'avatar_url', 'avatar', 'photo_url', 'bio', 'online_status',
+            'last_seen', 'weight_kg', 'height_cm', 'date_of_birth',
             'goals', 'stats', 'preferences', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'email', 'created_at', 'updated_at', 'last_seen']
+        read_only_fields = [
+            'id', 'email', 'created_at', 'updated_at', 'last_seen', 'avatar',
+        ]
+
+    def get_photo_url(self, obj):
+        return obj.photo_url(self.context.get('request'))
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Basic User Serializer (for lists and minimal info)"""
 
     full_name = serializers.CharField(read_only=True)
+    photo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'display_name', 'full_name', 'avatar_url', 'online_status']
+        fields = [
+            'id', 'email', 'display_name', 'full_name', 'avatar_url',
+            'photo_url', 'online_status',
+        ]
+
+    def get_photo_url(self, obj):
+        return obj.photo_url(self.context.get('request'))
         read_only_fields = ['id', 'email']
 
 
@@ -176,7 +190,10 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['display_name', 'first_name', 'last_name', 'avatar_url', 'bio']
+        fields = [
+            'display_name', 'first_name', 'last_name', 'avatar_url', 'bio',
+            'weight_kg', 'height_cm', 'date_of_birth',
+        ]
 
     def update(self, instance, validated_data):
         """Update user profile"""

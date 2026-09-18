@@ -45,8 +45,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     display_name = models.CharField(max_length=100, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
+    # An externally hosted avatar (set by pasting a link).
     avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    # An avatar uploaded from the device. Takes precedence over avatar_url.
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     bio = models.TextField(max_length=500, blank=True)
+
+    # Body metrics. Weight is what makes calorie estimation possible — without
+    # it the app cannot turn a duration into an energy figure.
+    weight_kg = models.FloatField(null=True, blank=True, help_text='Body weight in kilograms')
+    height_cm = models.FloatField(null=True, blank=True, help_text='Height in centimetres')
+    date_of_birth = models.DateField(null=True, blank=True)
 
     # Status
     online_status = models.CharField(
@@ -88,6 +97,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self):
         """Get user's full name"""
         return f"{self.first_name} {self.last_name}".strip() or self.display_name
+
+
+    def photo_url(self, request=None):
+        """The avatar to display: the uploaded file if there is one, else the
+        external link. Absolute when a request is available, so mobile clients
+        can load it without knowing the host."""
+        if self.avatar:
+            url = self.avatar.url
+            return request.build_absolute_uri(url) if request else url
+        return self.avatar_url or None
 
 
 class UserGoals(models.Model):
