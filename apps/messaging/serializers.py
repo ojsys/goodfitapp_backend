@@ -13,7 +13,7 @@ class MessageSerializer(serializers.ModelSerializer):
     """Serializer for messages"""
 
     sender_name = serializers.CharField(source='sender.display_name', read_only=True)
-    sender_photo = serializers.CharField(source='sender.profile_photo', read_only=True)
+    sender_photo = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
 
     class Meta:
@@ -33,6 +33,10 @@ class MessageSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'sender', 'sender_name', 'sender_photo', 'is_read', 'read_at', 'created_at', 'updated_at']
+
+    def get_sender_photo(self, obj):
+        """Resolved avatar for the sender (uploaded file, else linked URL)."""
+        return obj.sender.photo_url(self.context.get('request'))
 
     def get_is_mine(self, obj):
         """Check if message was sent by current user"""
@@ -60,9 +64,9 @@ class ConversationSerializer(serializers.ModelSerializer):
     """Serializer for conversations"""
 
     participant1_name = serializers.CharField(source='participant1.display_name', read_only=True)
-    participant1_photo = serializers.CharField(source='participant1.profile_photo', read_only=True)
+    participant1_photo = serializers.SerializerMethodField()
     participant2_name = serializers.CharField(source='participant2.display_name', read_only=True)
-    participant2_photo = serializers.CharField(source='participant2.profile_photo', read_only=True)
+    participant2_photo = serializers.SerializerMethodField()
 
     other_participant = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
@@ -90,6 +94,12 @@ class ConversationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def get_participant1_photo(self, obj):
+        return obj.participant1.photo_url(self.context.get('request'))
+
+    def get_participant2_photo(self, obj):
+        return obj.participant2.photo_url(self.context.get('request'))
+
     def get_other_participant(self, obj):
         """Get the other participant's details"""
         request = self.context.get('request')
@@ -98,7 +108,7 @@ class ConversationSerializer(serializers.ModelSerializer):
             return {
                 'id': other.id,
                 'display_name': other.display_name,
-                'profile_photo': other.profile_photo,
+                'profile_photo': other.photo_url(self.context.get('request')),
             }
         return None
 
