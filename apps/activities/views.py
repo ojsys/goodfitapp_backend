@@ -246,28 +246,39 @@ class FeedView(generics.ListAPIView):
 
             if connection_ids:
                 return (
-                    Activity.objects.filter(user_id__in=connection_ids)
-                    .filter(self._visible_to_others())
+                    Activity.objects.filter(
+                        # Your own posts belong in your feed too -- a feed that
+                        # hides what you just recorded feels broken.
+                        Q(user=user) | (
+                            Q(user_id__in=connection_ids)
+                            & self._visible_to_others()
+                        )
+                    )
                     .select_related('user')
                     .order_by('-start_time')[:50]
                 )
             # No connections yet: fall through to discover.
 
         return (
-            Activity.objects.exclude(user=user)
-            .filter(self._visible_to_others())
+            Activity.objects.filter(
+                Q(user=user) | (~Q(user=user) & self._visible_to_others())
+            )
             .select_related('user')
             .order_by('-start_time')[:50]
         )
 
     @staticmethod
     def _visible_to_others():
-        """Only surface activities from accounts set to public.
+        """What another person is allowed to see.
 
-        An account with no preferences row has never opted out, and the model
-        default is public, so treat a missing row as public too.
+        Two gates, both of which must pass: the author's account must be
+        public, and the individual activity must not be marked private. An
+        account with no preferences row has never opted out, and the model
+        default is public, so a missing row counts as public.
         """
-        return (
+        account_public = (
             Q(user__preferences__profile_visibility='public')
             | Q(user__preferences__isnull=True)
         )
+        activity_shared = ~Q(visibility='private')
+        return account_public & activity_shared

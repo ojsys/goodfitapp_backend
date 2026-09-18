@@ -20,7 +20,7 @@ class ActivitySerializer(serializers.ModelSerializer):
             'distance', 'calories_burned', 'average_speed', 'pace',
             'elevation_gain', 'heart_rate_avg', 'heart_rate_max',
             'start_latitude', 'start_longitude', 'start_address',
-            'route', 'created_at', 'updated_at'
+            'route', 'visibility', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
@@ -40,7 +40,7 @@ class ActivityListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'type', 'title', 'start_time', 'duration',
             'distance', 'calories_burned', 'elevation_gain',
-            'route_preview', 'created_at'
+            'route_preview', 'visibility', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -85,7 +85,8 @@ class ActivityCreateSerializer(serializers.ModelSerializer):
             'type', 'title', 'notes', 'start_time', 'end_time', 'duration',
             'distance', 'calories_burned', 'average_speed', 'pace',
             'elevation_gain', 'heart_rate_avg', 'heart_rate_max',
-            'start_latitude', 'start_longitude', 'start_address', 'route'
+            'start_latitude', 'start_longitude', 'start_address', 'route',
+            'visibility'
         ]
 
     def create(self, validated_data):

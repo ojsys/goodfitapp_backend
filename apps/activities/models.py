@@ -46,6 +46,18 @@ class Activity(models.Model):
     start_longitude = models.FloatField(null=True, blank=True)
     start_address = models.CharField(max_length=500, blank=True)
 
+    # Who can see this activity in someone else's feed. The save screen asks
+    # for this; until now the answer was only recorded in the notes text.
+    VISIBILITY_CHOICES = [
+        ('public', 'Everyone'),
+        ('followers', 'Followers'),
+        ('private', 'Only me'),
+    ]
+    visibility = models.CharField(
+        max_length=20, choices=VISIBILITY_CHOICES, default='public',
+        help_text='Who can see this activity in the feed',
+    )
+
     # Route data (stored as JSON)
     route = models.JSONField(null=True, blank=True, help_text='Array of route points with lat/lng/altitude/speed/timestamp')
 

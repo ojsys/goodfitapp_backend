@@ -130,37 +130,51 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             preferred_age_max__gte=current_profile.age if current_profile.age else 18
         )
 
-        # Filter by distance if location is available
-        if current_profile.latitude and current_profile.longitude:
-            # Note: For production, use PostGIS for efficient geo queries
-            # For now, we'll fetch and filter in Python
-            profiles = list(queryset)
-            filtered_profiles = []
+        # Distance is a preference, not a gate.
+        #
+        # Hard-filtering by radius meant a user in a quiet area saw nobody at
+        # all, which is indistinguishable from the feature being broken. Near
+        # people are ranked first; everyone else follows. Pass `nearby=true`
+        # (optionally with `max_distance=<miles>`) to restrict the results.
+        nearby_only = request.query_params.get('nearby', '').lower() in (
+            '1', 'true', 'yes',
+        )
+        try:
+            max_distance = float(
+                request.query_params.get(
+                    'max_distance', current_profile.preferred_distance_miles,
+                )
+            )
+        except (TypeError, ValueError):
+            max_distance = current_profile.preferred_distance_miles
 
-            for profile in profiles:
-                distance = profile.distance_from(current_profile.latitude, current_profile.longitude)
-                if distance is not None and distance <= current_profile.preferred_distance_miles:
-                    filtered_profiles.append(profile)
+        profiles = list(queryset)
+        has_location = bool(current_profile.latitude and current_profile.longitude)
 
-            # Score and sort by compatibility
-            scored_profiles = []
-            for profile in filtered_profiles:
-                score = self._calculate_compatibility_score(current_profile, profile)
-                scored_profiles.append((profile, score))
+        scored = []
+        for profile in profiles:
+            distance = (
+                profile.distance_from(
+                    current_profile.latitude, current_profile.longitude
+                )
+                if has_location
+                else None
+            )
 
-            # Sort by score (highest first)
-            scored_profiles.sort(key=lambda x: x[1], reverse=True)
+            if nearby_only and (distance is None or distance > max_distance):
+                continue
 
-            # Return top matches
-            top_profiles = [p[0] for p in scored_profiles[:50]]
-            serializer = MatchedUserSerializer(top_profiles, many=True, context={'request': request})
-            return Response(serializer.data)
+            score = self._calculate_compatibility_score(current_profile, profile)
+            # Rank by compatibility first, then by proximity. Unknown distance
+            # sorts last rather than being dropped.
+            scored.append((profile, score, distance if distance is not None else 1e9))
 
-        else:
-            # No location - just return recent profiles
-            queryset = queryset.order_by('-created_at')[:50]
-            serializer = MatchedUserSerializer(queryset, many=True, context={'request': request})
-            return Response(serializer.data)
+        scored.sort(key=lambda row: (-row[1], row[2]))
+
+        serializer = MatchedUserSerializer(
+            [row[0] for row in scored[:50]], many=True, context={'request': request},
+        )
+        return Response(serializer.data)
 
     def _calculate_compatibility_score(self, profile1, profile2):
         """
