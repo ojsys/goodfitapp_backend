@@ -11,6 +11,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from .views import api_root
+
 # API Documentation Schema
 schema_view = get_schema_view(
     openapi.Info(
@@ -37,6 +39,8 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # API Endpoints
+    # An index at /api/ so the bare path reports status instead of 404ing.
+    path('api/', api_root, name='api-root'),
     path('api/auth/', include('apps.users.urls')),
     path('api/activities/', include('apps.activities.urls')),
     path('api/events/', include('apps.events.urls')),
