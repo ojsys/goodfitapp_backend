@@ -121,6 +121,13 @@ does, straight off disk.
 
 **Changes do not appear.** Passenger caches the loaded app. `touch tmp/restart.txt`.
 
+**`UnicodeEncodeError: 'ascii' codec can't encode character`.** Passenger starts
+the process with an ASCII stdout, so *anything* non-ASCII written to a log
+crashes the worker. `passenger_wsgi.py` now forces UTF-8 on stdout and stderr,
+and the settings modules are plain ASCII with no startup banners. If you add
+`print()` calls or log user-supplied text, this is the protection that keeps a
+name like `Jose` with an accent from taking the site down.
+
 **`ModuleNotFoundError` for a package you installed.** You installed it outside
 the app's virtualenv. Re-enter it with the command from Setup Python App.
 

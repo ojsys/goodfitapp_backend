@@ -25,7 +25,7 @@ if SECRET_KEY == 'django-insecure-change-this-in-production':
 # individual DB_* settings as a plain dict.
 #
 # It is deliberately NOT assembled into a URL string: a password containing
-# any of @ : / # % — which cPanel-generated passwords routinely do — corrupts
+# any of @ : / # % -- which cPanel-generated passwords routinely do -- corrupts
 # the URL and surfaces as a baffling parse error somewhere else in the string,
 # such as the password being read as the port. Passing the fields straight
 # through to the driver needs no escaping and cannot be mis-split.
@@ -100,7 +100,7 @@ SESSION_COOKIE_SAMESITE = 'Strict'
 
 # Password hashers.
 #
-# Argon2 is preferred, but it needs the `argon2-cffi` package — and if that is
+# Argon2 is preferred, but it needs the `argon2-cffi` package -- and if that is
 # missing, Django raises on every login and signup. Shared hosts do not always
 # have it, so it is only put first when it can actually be imported.
 PASSWORD_HASHERS = [
@@ -239,6 +239,6 @@ STATIC_URL = '/static/'
 # AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-print("🚀 Running in PRODUCTION mode")
-print(f"🔒 DEBUG = {DEBUG}")
-print(f"🌐 Allowed hosts: {ALLOWED_HOSTS}")
+# Deliberately silent: settings modules are imported on every worker boot, and
+# writing to stdout there is noise at best. Use `python manage.py diffsettings`
+# or check_env.py to inspect what loaded.

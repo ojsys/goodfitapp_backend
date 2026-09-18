@@ -110,6 +110,6 @@ SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-print("🔧 Running in DEVELOPMENT mode")
-print(f"📊 Database: {DATABASES['default']['NAME']}")
-print(f"🌐 CORS: Allow all origins = {CORS_ALLOW_ALL_ORIGINS}")
+print("Running in DEVELOPMENT mode")
+print(f"Database: {DATABASES['default']['NAME']}")
+print(f"CORS: Allow all origins = {CORS_ALLOW_ALL_ORIGINS}")

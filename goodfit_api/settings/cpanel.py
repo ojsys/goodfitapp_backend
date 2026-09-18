@@ -3,7 +3,7 @@ cPanel / Phusion Passenger settings for GoodFit API.
 
 Shared cPanel hosting differs from a container platform in ways that matter:
 
-* Passenger runs the app, not gunicorn — see `passenger_wsgi.py`.
+* Passenger runs the app, not gunicorn -- see `passenger_wsgi.py`.
 * Apache sits in front, terminating TLS, so Django sees plain HTTP.
 * Static and media files are served by Apache straight off disk, which is
   faster than routing them through Python.
@@ -60,10 +60,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # ---------------------------------------------------------------------------
 # Shared hosting has no journal to read, so keep file logging (inherited from
 # production) but drop the mail_admins handler unless SMTP is actually
-# configured — an unreachable mail server turns every error into two errors.
+# configured -- an unreachable mail server turns every error into two errors.
 if not config('EMAIL_HOST_USER', default=''):
     LOGGING['loggers']['django.request']['handlers'] = ['file']  # noqa: F405
 
-print("🚀 Running with cPanel settings")
-print(f"📁 STATIC_ROOT = {STATIC_ROOT}")
-print(f"📁 MEDIA_ROOT  = {MEDIA_ROOT}")
+# No startup printing here either -- see the note in production.py.
