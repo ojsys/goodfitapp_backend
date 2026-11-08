@@ -10,14 +10,27 @@ from django.utils import timezone
 class Activity(models.Model):
     """Activity log model"""
 
+    # The Record screen's activity picker (Core-Record.dc.html): top 4 plus
+    # More. GPS kinds record a track; the rest use the session timer.
     ACTIVITY_TYPES = [
-        ('Run', 'Run'),
-        ('Cycle', 'Cycle'),
-        ('Walk', 'Walk'),
-        ('Swim', 'Swim'),
-        ('Yoga', 'Yoga'),
-        ('Strength', 'Strength'),
+        ('ride', 'Ride'),
+        ('run', 'Run'),
+        ('yoga', 'Yoga'),
+        ('walk', 'Walk'),
+        ('hike', 'Hike'),
+        ('strength', 'Strength'),
+        ('pilates', 'Pilates'),
+        ('hiit', 'HIIT'),
+        ('crossfit', 'CrossFit'),
+        ('swim', 'Swim'),  # legacy records only
     ]
+    GPS_TYPES = {'ride', 'run', 'walk', 'hike'}
+    # Older app builds sent capitalized names.
+    LEGACY_TYPES = {'Run': 'run', 'Cycle': 'ride', 'Walk': 'walk', 'Swim': 'swim',
+                    'Yoga': 'yoga', 'Strength': 'strength'}
+
+    # "How Did That Feel?" on the Save screen.
+    EFFORTS = ['Easy', 'Steady', 'Moderate', 'Hard', 'Max']
 
     # User relationship
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activities')
@@ -46,17 +59,42 @@ class Activity(models.Model):
     start_longitude = models.FloatField(null=True, blank=True)
     start_address = models.CharField(max_length=500, blank=True)
 
-    # Who can see this activity in someone else's feed. The save screen asks
-    # for this; until now the answer was only recorded in the notes text.
+    # Who Can See This (Core-Save.dc.html). Enforced by the feed and the
+    # detail endpoint; the raw track is never sent to anyone but the owner.
     VISIBILITY_CHOICES = [
-        ('public', 'Everyone'),
+        ('everyone', 'Everyone'),
         ('followers', 'Followers'),
-        ('private', 'Only me'),
+        ('club', 'Club only'),
+        ('me', 'Only me'),
     ]
     visibility = models.CharField(
-        max_length=20, choices=VISIBILITY_CHOICES, default='public',
-        help_text='Who can see this activity in the feed',
+        max_length=20, choices=VISIBILITY_CHOICES, default='followers',
+        help_text='Who can see this activity',
     )
+    # For 'club' visibility: which club's members can see it.
+    club = models.ForeignKey(
+        'social.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='activities',
+    )
+
+    # Recording details (seconds / meters / km/h).
+    moving_time = models.IntegerField(null=True, blank=True, help_text='Moving time in seconds')
+    elapsed_time = models.IntegerField(null=True, blank=True, help_text='Elapsed time in seconds')
+    max_speed = models.FloatField(null=True, blank=True, help_text='Max speed in km/h')
+    avg_power = models.IntegerField(null=True, blank=True, help_text='Watts, from a sensor')
+    cadence = models.IntegerField(null=True, blank=True, help_text='rpm, from a sensor')
+    effort = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text='0 Easy, 1 Steady, 2 Moderate, 3 Hard, 4 Max',
+    )
+    # [{"n": 1, "distance": m, "moving_time": s, "elevation_gain": m}]
+    laps = models.JSONField(default=list, blank=True)
+    route_name = models.CharField(max_length=120, blank=True)
+    # The saved route followed (Routes > Start this route).
+    route_ref = models.ForeignKey('routes.Route', on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='activities')
+
+    # Set by the app when it records offline, so a retried upload of the same
+    # recording never creates a second activity.
+    client_id = models.UUIDField(null=True, blank=True)
 
     # Route data (stored as JSON)
     route = models.JSONField(null=True, blank=True, help_text='Array of route points with lat/lng/altitude/speed/timestamp')
@@ -74,9 +112,33 @@ class Activity(models.Model):
             models.Index(fields=['user', '-start_time']),
             models.Index(fields=['type']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'client_id'], name='activity_unique_client_id',
+                condition=models.Q(client_id__isnull=False),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.user.email} - {self.title} ({self.start_time.date()})"
+
+    @property
+    def is_gps(self):
+        return self.type in self.GPS_TYPES
+
+    def track_points(self):
+        """The recorded track as [(lat, lng, alt_or_None, t_or_None)].
+        Accepts both point shapes the app has sent over time."""
+        out = []
+        for p in self.route or []:
+            if not isinstance(p, dict):
+                continue
+            lat = p.get('lat', p.get('latitude'))
+            lng = p.get('lng', p.get('longitude'))
+            if lat is None or lng is None:
+                continue
+            out.append((float(lat), float(lng), p.get('alt', p.get('altitude')), p.get('t', p.get('timestamp'))))
+        return out
 
     def save(self, *args, **kwargs):
         """Override save to update user stats"""
@@ -360,3 +422,15 @@ class LiveActivity(models.Model):
             self.save()
 
             return activity
+
+
+class ActivityPhoto(models.Model):
+    """Photos added on the Save screen."""
+
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='photos')
+    image = models.ImageField(upload_to='activity_photos/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'activity_photos'
+        ordering = ['created_at']

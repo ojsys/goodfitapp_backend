@@ -55,7 +55,61 @@ class User(AbstractBaseUser, PermissionsMixin):
     # it the app cannot turn a duration into an energy figure.
     weight_kg = models.FloatField(null=True, blank=True, help_text='Body weight in kilograms')
     height_cm = models.FloatField(null=True, blank=True, help_text='Height in centimetres')
-    date_of_birth = models.DateField(null=True, blank=True)
+
+    # --- A Good Fit membership ------------------------------------------------
+    # Birthday, encrypted (see apps/users/age_gate.py). Set once at sign-up;
+    # only support can change it. Never serialized to other members.
+    birthday_enc = models.TextField(blank=True, default='')
+    # IANA time zone the age is computed in.
+    timezone = models.CharField(max_length=64, default='UTC')
+
+    neighborhood = models.CharField(max_length=80, blank=True)
+    headline = models.CharField(max_length=80, blank=True)
+
+    INTENTS = ('community', 'fitness', 'romantic')
+    INTERESTS = (
+        'running', 'cycling', 'strength', 'yoga', 'hiking',
+        'pilates', 'hiit', 'crossfit',
+    )
+    MAX_INTERESTS = 3
+    # What the member is here for. 'romantic' turns on A Good Match.
+    intents = models.JSONField(default=list, blank=True)
+    interests = models.JSONField(default=list, blank=True)
+
+    units = models.CharField(
+        max_length=2, choices=[('mi', 'Miles'), ('km', 'Kilometers')], default='mi'
+    )
+    plan = models.CharField(
+        max_length=10, choices=[('free', 'Free'), ('plus', 'Plus')], default='free'
+    )
+
+    guidelines_version = models.CharField(max_length=20, blank=True)
+    guidelines_agreed_at = models.DateTimeField(null=True, blank=True)
+    # The optional photo step was seen (added or skipped).
+    photo_step_done = models.BooleanField(default=False)
+    # New-member Home: the getting-started card was closed (X). It then
+    # shows collapsed ("Getting started · 2 of 6  Show").
+    checklist_hidden = models.BooleanField(default=False)
+    # Privacy and Safety: hide the start and end of every track from others,
+    # even with no saved place. On by default (requirements: Location).
+    hide_track_ends = models.BooleanField(default=True)
+
+    # Fit Buddies distance ("2.4 mi away"). Rounded to 2 decimals (about
+    # 1 km) before it's stored, so no address or routine can be read from it.
+    approx_lat = models.FloatField(null=True, blank=True)
+    approx_lng = models.FloatField(null=True, blank=True)
+    # Profile extras shown on Fit Buddies ("Coffee after"; "Post-Ride Snack?").
+    buddy_tags = models.JSONField(default=list, blank=True)
+    prompt_question = models.CharField(max_length=60, blank=True)
+    prompt_answer = models.CharField(max_length=150, blank=True)
+    # Verified badge. How members verify is an open decision (BUILD_PLAN).
+    id_verified = models.BooleanField(default=False)
+    # Host an event > community ride: the host agreement, once.
+    host_agreed_at = models.DateTimeField(null=True, blank=True)
+
+    # Social sign-in subjects (Apple "sub", Google "sub").
+    apple_sub = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    google_sub = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     # Status
     online_status = models.CharField(
@@ -98,6 +152,56 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Get user's full name"""
         return f"{self.first_name} {self.last_name}".strip() or self.display_name
 
+
+    # --- Birthday and age -----------------------------------------------------
+
+    @property
+    def birthday(self):
+        from .age_gate import decrypt_birthday
+        return decrypt_birthday(self.birthday_enc)
+
+    def set_birthday_once(self, birthday):
+        """Store the birthday. Members can't change it after sign-up."""
+        from .age_gate import encrypt_birthday
+        if self.birthday_enc:
+            raise ValueError('Birthday is already set')
+        self.birthday_enc = encrypt_birthday(birthday)
+
+    @property
+    def age(self):
+        from .age_gate import compute_age
+        b = self.birthday
+        return compute_age(b, self.timezone) if b else None
+
+    # --- Onboarding --------------------------------------------------------
+
+    @property
+    def next_step(self):
+        """Where sign-up resumes. 'done' means a full member.
+
+        Order matches the onboarding flow: birthday (Apple/Google, and
+        accounts from before the age gate), What's your good fit, Interests,
+        Profile photo (optional), Community Guidelines.
+        """
+        if not self.birthday_enc:
+            return 'birthday'
+        if not self.intents:
+            return 'intent'
+        if not self.interests:
+            return 'interests'
+        if not self.photo_step_done and not (self.avatar or self.avatar_url):
+            return 'photo'
+        if not self.guidelines_agreed_at:
+            return 'guidelines'
+        return 'done'
+
+    @property
+    def is_member(self):
+        return self.next_step == 'done'
+
+    @property
+    def match_opted_in(self):
+        return 'romantic' in (self.intents or [])
 
     def photo_url(self, request=None):
         """The avatar to display: the uploaded file if there is one, else the
@@ -214,3 +318,31 @@ class UserPreferences(models.Model):
 
     def __str__(self):
         return f"Preferences for {self.user.email}"
+
+
+class SocialAgeBlock(models.Model):
+    """An Apple or Google sign-in ID that failed the 21+ check.
+
+    Holds a keyed hash of the ID only, never the birthday, so a retry from the
+    same ID with a different date is refused.
+    """
+
+    provider = models.CharField(max_length=10, choices=[('apple', 'Apple'), ('google', 'Google')])
+    subject_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'social_age_blocks'
+
+
+class AgeGateEvent(models.Model):
+    """Product analytics for the age gate: pass or fail only, never the
+    birthday or who it was."""
+
+    METHODS = [('email', 'Email'), ('apple', 'Apple'), ('google', 'Google'), ('existing', 'Existing account')]
+    method = models.CharField(max_length=10, choices=METHODS)
+    passed = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'age_gate_events'

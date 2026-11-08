@@ -11,7 +11,7 @@ import dj_database_url
 DEBUG = False
 
 # Only allow specific hosts in production
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS').split(',') if h.strip()]
 
 # Ensure SECRET_KEY is set in production
 SECRET_KEY = config('SECRET_KEY')
@@ -61,10 +61,8 @@ else:
     }
 
 # CORS Settings for Production
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='https://yourdomain.com,https://www.yourdomain.com'
-).split(',')
+# The mobile app doesn't need CORS; this is only for browser clients.
+CORS_ALLOWED_ORIGINS = [o.strip() for o in config('CORS_ALLOWED_ORIGINS', default='').split(',') if o.strip()]
 
 # Never allow all origins in production
 CORS_ALLOW_ALL_ORIGINS = False
@@ -77,6 +75,8 @@ CORS_ALLOW_ALL_ORIGINS = False
 # web server already handles it.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+# The container health check calls this over plain HTTP from inside the stack.
+SECURE_REDIRECT_EXEMPT = [r'^api/health/$']
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_BROWSER_XSS_FILTER = True
@@ -115,7 +115,10 @@ except ImportError:
     pass
 
 # Email backend for production
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Without SMTP credentials, emails (password reset) go to the log instead of
+# failing the request.
+EMAIL_BACKEND = ('django.core.mail.backends.smtp.EmailBackend' if config('EMAIL_HOST_USER', default='')
+                 else 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
@@ -170,7 +173,7 @@ LOGGING = {
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['mail_admins', 'file'],
+            'handlers': ['mail_admins', 'file', 'console'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -229,9 +232,14 @@ MANAGERS = ADMINS
 
 # Static files - using WhiteNoise for Render
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE was removed in Django 5.1; STORAGES replaces it.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
 
 # Media files (consider using AWS S3 or similar)
 # AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')

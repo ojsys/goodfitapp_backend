@@ -1,198 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoodFit API - Fitness & Wellness Platform</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Good Fit API</title>
+<meta name="description" content="The API behind A Good Fit, the community wellness app from GoodCo Bike Club: recording, routes, clubs, group rides, ride chats and safety.">
+<meta property="og:title" content="A Good Fit API">
+<meta property="og:description" content="The API behind a good group ride. Recording, routes, clubs, rides, chats and safety.">
+<meta name="theme-color" content="#F4EFE7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%236B7F3C'/%3E%3Ccircle cx='16' cy='16' r='5.5' fill='%23F4EFE7'/%3E%3C/svg%3E">
+{% include "docs/_brand.html" %}
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: var(--sans); color: var(--ink); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+  .eyebrow { font: 700 12.5px/1 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--clay); }
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02em; margin: 0; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; padding: 72px 0 64px; }
+  .hero h1 { font-size: clamp(42px, 6vw, 68px); line-height: 1.02; margin: 16px 0 20px; }
+  .hero h1 em { font-style: italic; color: var(--olive-deep); }
+  .lede { font-size: 19px; line-height: 1.6; color: var(--ink-muted); max-width: 540px; margin: 0 0 28px; }
+  .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 9px; height: 52px; padding: 0 22px; border-radius: 14px;
+    font: 700 16px/1 var(--sans); text-decoration: none; transition: transform .15s ease, background .15s ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
+  .btn-primary { background: var(--olive); color: #fff; }
+  .btn-primary:hover { background: var(--olive-deep); }
+  .btn-ghost { background: var(--surface); color: var(--olive-deep); border: 1.5px solid var(--olive); }
+  .status { display: inline-flex; align-items: center; gap: 8px; margin-top: 26px; font-size: 14px; color: var(--ink-muted); }
+  .status i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: block; }
+  .status.ok i { background: #5E8C3A; box-shadow: 0 0 0 4px rgba(94,140,58,.16); }
+  .status.down i { background: var(--danger); }
 
-        .container {
-            max-width: 800px;
-            background: white;
-            border-radius: 20px;
-            padding: 60px 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center;
-        }
+  /* Hero art: a ride card */
+  .art { position: relative; min-height: 440px; }
+  .map { position: absolute; inset: 0 0 30px 40px; border-radius: 26px; overflow: hidden; background: #EEE9DE; border: 1px solid var(--line); }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .route-draw { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: draw 2.6s cubic-bezier(.2,.8,.2,1) .3s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chip { position: absolute; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
+    box-shadow: 0 12px 30px rgba(49,57,27,.10); display: flex; gap: 11px; align-items: center; font-size: 13.5px;
+    animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+  .chip b { display: block; font-size: 14.5px; }
+  .chip span { color: var(--ink-muted); }
+  .chip .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .c1 { left: 0; top: 34px; animation-delay: .5s; }
+  .c2 { right: -6px; top: 46%; animation-delay: .8s; }
+  .c3 { left: 14px; bottom: 0; animation-delay: 1.1s; }
+  .date { width: 40px; height: 42px; border-radius: 10px; background: var(--clay); color: #fff; display: grid; place-items: center;
+    text-align: center; line-height: 1; flex: none; }
+  .date small { font: 700 9px/1 var(--sans); letter-spacing: .06em; display: block; }
+  .date strong { font: 700 17px/1 var(--sans); display: block; margin-top: 2px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-        .logo {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
+  /* Sections */
+  section { padding: 64px 0; }
+  .sec-head { max-width: 680px; margin-bottom: 30px; }
+  .sec-head h2 { font-size: clamp(30px, 4vw, 42px); margin: 12px 0 10px; line-height: 1.1; }
+  .sec-head p { font-size: 17px; color: var(--ink-muted); margin: 0; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 10px;
+    text-decoration: none; transition: border-color .15s ease, transform .15s ease; }
+  a.card:hover { border-color: #C9D3AE; transform: translateY(-2px); }
+  a.card:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
+  .card h3 { font-family: var(--sans); font-size: 17px; letter-spacing: 0; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--ink-muted); }
+  .card .ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
+  .card .more { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 13.5px; color: var(--olive-deep); }
+  .t-green { background: var(--green-tint); } .t-clay { background: var(--clay-tint); } .t-gold { background: var(--gold-tint); }
+  .t-danger { background: #F6E1DD; } .t-match { background: #FBF5EE; border: 1px solid #EAD7C3; }
+  svg.i { width: 22px; height: 22px; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-        h1 {
-            font-size: 2.5rem;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
+  /* Principles */
+  .band { background: var(--ink); color: var(--cream); border-radius: 28px; padding: 54px 48px; display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; }
+  .band h2 { font-size: clamp(30px, 4vw, 40px); line-height: 1.1; margin-top: 12px; }
+  .band .eyebrow { color: #E4B48E; }
+  .band ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 26px 30px; }
+  .band li b { display: block; font-size: 16.5px; margin-bottom: 4px; color: #fff; }
+  .band li span { color: #C9CDB8; font-size: 14.5px; }
 
-        .subtitle {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 40px;
-        }
+  /* Quickstart */
+  .qs { display: grid; grid-template-columns: .8fr 1.2fr; gap: 40px; align-items: start; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 36px 1fr; gap: 14px; counter-increment: s; }
+  .steps li::before { content: counter(s); width: 36px; height: 36px; border-radius: 50%; background: var(--olive-tint); color: var(--olive-deep);
+    font-weight: 700; display: grid; place-items: center; }
+  .steps b { display: block; font-size: 16px; }
+  .steps span { color: var(--ink-muted); font-size: 14.5px; }
+  .code { position: relative; background: #2B3118; border-radius: 20px; overflow: hidden; border: 1px solid #3A4223; }
+  .code-tabs { display: flex; gap: 4px; padding: 10px 12px 0; border-bottom: 1px solid #3A4223; }
+  .code-tabs button { background: none; border: 0; color: #A9AE97; font: 600 13px/1 var(--sans); padding: 10px 12px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .code-tabs button[aria-selected="true"] { color: #fff; border-color: #B9CC7E; }
+  .code-tabs button:focus-visible { outline: 2px solid #B9CC7E; outline-offset: -2px; border-radius: 6px; }
+  pre { margin: 0; padding: 20px 22px; overflow-x: auto; font: 13.5px/1.7 var(--mono); color: #E8EAD9; }
+  pre .k { color: #B9CC7E; } pre .s { color: #E4B48E; } pre .c { color: #8A9070; }
+  .copy { position: absolute; top: 12px; right: 12px; background: #3A4223; color: #E8EAD9; border: 0; border-radius: 8px; font: 600 12px/1 var(--sans); padding: 8px 10px; cursor: pointer; }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
-        }
+  /* Live groups */
+  .groups { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .groups a { text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; font-size: 14px; font-weight: 600; }
+  .groups a:hover { border-color: var(--olive); color: var(--olive-deep); }
+  .groups a small { color: var(--ink-muted); font-weight: 500; margin-left: 6px; }
+  .stats { display: flex; gap: 34px; margin-top: 8px; flex-wrap: wrap; }
+  .stats div b { font: 700 34px/1 var(--display); display: block; }
+  .stats div span { font-size: 13px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
 
-        .feature {
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            transition: transform 0.3s ease;
-        }
+  footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 28px 0 44px; font-size: 14px; color: var(--ink-muted); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer a { color: var(--olive-deep); font-weight: 600; text-decoration: none; margin-left: 16px; }
 
-        .feature:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .feature-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .feature-desc {
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .api-link {
-            display: inline-block;
-            margin-top: 30px;
-            padding: 15px 40px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .api-link:hover {
-            background: #764ba2;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #d4edda;
-            color: #155724;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #28a745;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .version {
-            margin-top: 30px;
-            color: #999;
-            font-size: 0.9rem;
-        }
-
-        footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #999;
-            font-size: 0.9rem;
-        }
-    </style>
+  @media (max-width: 960px) {
+    .hero, .qs, .band { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .art { min-height: 380px; }
+    .band { padding: 40px 28px; }
+  }
+  @media (max-width: 560px) {
+    .hero { padding: 40px 0; gap: 30px; }
+    .grid, .band ul { grid-template-columns: 1fr; }
+    .map { inset: 0 0 30px 0; }
+    .c2 { right: 0; }
+    section { padding: 44px 0; }
+    footer a { margin: 0 16px 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route-draw { animation: none; stroke-dashoffset: 0; }
+    .chip { animation: none; }
+    .btn, .card { transition: none; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">💪</div>
-        <h1>GoodFit API</h1>
-        <p class="subtitle">Your Fitness & Wellness Platform Backend</p>
+{% include "docs/_bar.html" %}
 
-        <div class="status">
-            <span class="status-dot"></span>
-            <span>API is running and healthy</span>
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">A Good Fit · Developer API</div>
+        <h1>The API behind a <em>good</em> group ride.</h1>
+        <p class="lede">Everything the A Good Fit app runs on: recording rides, runs and classes, drawing routes, finding clubs and people to move with, and the chats that keep a Sunday ride together.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="/docs/">
+            Explore the API
+            <svg class="i" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="/redoc/">Read the reference</a>
         </div>
+        <div class="status" id="status" role="status" aria-live="polite"><i></i><span>Checking status…</span></div>
+      </div>
 
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">🏃</div>
-                <div class="feature-title">Activity Tracking</div>
-                <div class="feature-desc">Track workouts, runs, and fitness activities</div>
-            </div>
-
-            <div class="feature">
-                <div class="feature-icon">🗺️</div>
-                <div class="feature-title">GPS Routes</div>
-                <div class="feature-desc">Record and visualize workout routes</div>
-            </div>
-
-            <div class="feature">
-                <div class="feature-icon">🤝</div>
-                <div class="feature-title">Social Matching</div>
-                <div class="feature-desc">Find workout partners nearby</div>
-            </div>
-
-            <div class="feature">
-                <div class="feature-icon">📅</div>
-                <div class="feature-title">Events</div>
-                <div class="feature-desc">Discover fitness events and challenges</div>
-            </div>
+      <div class="art" aria-hidden="true">
+        <div class="map">
+          <svg viewBox="0 0 520 440" preserveAspectRatio="xMidYMid slice">
+            <rect width="520" height="440" fill="#EEE9DE"/>
+            <path d="M0 330 C120 300 180 360 300 320 S460 270 520 300 V440 H0Z" fill="#E3E8D2"/>
+            <path d="M330 0 C350 80 300 120 340 190 S460 230 520 210 V0Z" fill="#DCE5EA"/>
+            <g stroke="#FFFFFF" stroke-width="10" fill="none" opacity=".9">
+              <path d="M-10 120 L530 70"/><path d="M-10 250 L530 205"/><path d="M90 -10 L150 450"/><path d="M250 -10 L300 450"/><path d="M420 -10 L455 450"/>
+            </g>
+            <g stroke="#E2DACB" stroke-width="1" fill="none">
+              <path d="M40 40 C120 20 200 60 260 40"/><path d="M30 180 C110 160 190 200 250 180"/><path d="M300 380 C360 360 420 400 500 370"/>
+            </g>
+            <ellipse cx="205" cy="300" rx="78" ry="62" fill="#D8E2C2"/>
+            <path class="route-draw" d="M120 92 C160 80 210 112 240 150 S290 230 270 270 S210 360 160 330 S110 250 150 210 S230 180 300 160 S400 140 430 110" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+            <path class="route-draw" d="M120 92 C160 80 210 112 240 150 S290 230 270 270 S210 360 160 330 S110 250 150 210 S230 180 300 160 S400 140 430 110" fill="none" stroke="#C84B3C" stroke-width="5.5" stroke-linecap="round"/>
+            <circle cx="120" cy="92" r="9" fill="#6B7F3C" stroke="#fff" stroke-width="3.5"/>
+            <circle cx="430" cy="110" r="9" fill="#31391B" stroke="#fff" stroke-width="3.5"/>
+          </svg>
         </div>
-
-        <a href="/api/" class="api-link">🚀 Explore API Documentation</a>
-
-        <p class="version">Version 1.0.0 | Django REST Framework</p>
-
-        <footer>
-            <p>Built with ❤️ for the fitness community</p>
-            <p style="margin-top: 10px;">
-                <a href="/admin/" style="color: #667eea; text-decoration: none;">Admin Panel</a> |
-                <a href="/api/docs/" style="color: #667eea; text-decoration: none;">API Docs</a>
-            </p>
-        </footer>
+        <div class="chip c1">
+          <div class="date"><div><small>SUN</small><strong>15</strong></div></div>
+          <div><b>Sunday Social Ride</b><span>8:00 AM · Grand Army Plaza · 7 going</span></div>
+        </div>
+        <div class="chip c2">
+          <div class="ic t-green"><svg class="i" viewBox="0 0 24 24" stroke="#4E5E2B"><path d="M5 21L9.5 3"/><path d="M19 21L14.5 3"/><path d="M12 4.5v2.5"/><path d="M12 10.5v3"/><path d="M12 17v3.5"/></svg></div>
+          <div><b>Prospect Park Loop</b><span>3.1 mi · 121 ft · Club favorite</span></div>
+        </div>
+        <div class="chip c3">
+          <div class="ic t-gold"><svg class="i" viewBox="0 0 24 24" stroke="#7D6224"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M10 2.5h4"/></svg></div>
+          <div><b>Slow mode · Send again in 0:25</b><span>Ride chats stay kind on their own</span></div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">What it does</div>
+        <h2>One API for the whole loop.</h2>
+        <p>From the first pedal stroke to the coffee stop chat. Each area has its own group in the docs, with examples you can run.</p>
+      </div>
+      <div class="grid">
+        <a class="card" href="/docs/#/Activities">
+          <div class="ic" style="background:#F6E1DD"><svg class="i" viewBox="0 0 24 24" stroke="#C84B3C"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5" fill="#C84B3C" stroke="none"/></svg></div>
+          <h3>Record</h3><p>Rides, runs, walks and classes, recorded on the phone and saved once. Retries never double up.</p><span class="more">Activities</span>
+        </a>
+        <a class="card" href="/docs/#/Routes">
+          <div class="ic t-green"><svg class="i" viewBox="0 0 24 24" stroke="#4E5E2B"><path d="M5 21L9.5 3"/><path d="M19 21L14.5 3"/><path d="M12 4.5v2.5"/><path d="M12 10.5v3"/><path d="M12 17v3.5"/></svg></div>
+          <h3>Routes</h3><p>Tap out a route and it snaps to roads and paths, with distance, climb and time.</p><span class="more">Routes</span>
+        </a>
+        <a class="card" href="/docs/#/Clubs%20%26%20community">
+          <div class="ic t-green"><svg class="i" viewBox="0 0 24 24" stroke="#4E5E2B"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M16 14.6a5.6 5.6 0 0 1 5.5 5.4"/></svg></div>
+          <h3>Clubs</h3><p>Club pages, members, leaderboards and the Community hub that ties them together.</p><span class="more">Clubs &amp; community</span>
+        </a>
+        <a class="card" href="/docs/#/Events%20%26%20rides">
+          <div class="ic t-clay"><svg class="i" viewBox="0 0 24 24" stroke="#A65F2E"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg></div>
+          <h3>Rides &amp; events</h3><p>Browse by day, RSVP, host a community ride or suggest one to your club.</p><span class="more">Events &amp; rides</span>
+        </a>
+        <a class="card" href="/docs/#/Chats">
+          <div class="ic t-green"><svg class="i" viewBox="0 0 24 24" stroke="#4E5E2B"><path d="M21 14a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Ride chats</h3><p>Open when you RSVP, close 48 hours after. Routes, photos and live location that ends on its own.</p><span class="more">Chats</span>
+        </a>
+        <a class="card" href="/docs/#/Fit%20Buddies">
+          <div class="ic t-clay"><svg class="i" viewBox="0 0 24 24" stroke="#A65F2E"><circle cx="9" cy="9" r="3.2"/><circle cx="15.5" cy="10" r="2.6"/><path d="M3.5 19c.8-3 3-4.6 5.5-4.6s4.7 1.6 5.5 4.6"/><path d="M14.5 15c2.3-.3 4.6.9 5.5 4"/></svg></div>
+          <h3>Fit Buddies</h3><p>People nearby who move at your pace, with distances kept approximate.</p><span class="more">Fit Buddies</span>
+        </a>
+        <a class="card" href="/docs/#/Safety">
+          <div class="ic t-danger"><svg class="i" viewBox="0 0 24 24" stroke="#A8392C"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>Safety</h3><p>Report a person or a message, block in one tap. Unsafe reports go to the front of the line.</p><span class="more">Safety</span>
+        </a>
+        <a class="card" href="/docs/#/Privacy">
+          <div class="ic t-gold"><svg class="i" viewBox="0 0 24 24" stroke="#7D6224"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>Privacy</h3><p>Privacy zones and hidden track ends, applied on the server before anyone else sees a map.</p><span class="more">Privacy</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="band">
+        <div>
+          <div class="eyebrow">How it’s built</div>
+          <h2>Show up. Look out. Keep it kind.</h2>
+        </div>
+        <ul>
+          <li><b>Private by default</b><span>Tracks are trimmed around home and the first and last 200 m on the server. Locations for matching are rounded to about a kilometer.</span></li>
+          <li><b>Built for bad signal</b><span>Saves and messages carry a client id, so a retry from a tunnel or a dead zone never posts twice.</span></li>
+          <li><b>Safety in the API</b><span>Slow mode, rate limits, blocks that work both ways, and a 21+ age check before member features open.</span></li>
+          <li><b>Plain and predictable</b><span>JSON over HTTPS, meters and seconds, ISO times in UTC, and errors with a code you can switch on.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap qs">
+      <div>
+        <div class="sec-head">
+          <div class="eyebrow">Quickstart</div>
+          <h2>Your first call in a minute.</h2>
+        </div>
+        <ol class="steps">
+          <li><div><b>Sign in</b><span>Email, Apple or Google. You get an access token and a refresh token.</span></div></li>
+          <li><div><b>Send the token</b><span>As <code>Authorization: Bearer …</code> on every request. In the docs, use Authorize.</span></div></li>
+          <li><div><b>Load Home</b><span>One call returns the week, the feed, upcoming rides and suggestions.</span></div></li>
+        </ol>
+      </div>
+      <div class="code">
+        <div class="code-tabs" role="tablist" aria-label="Example language">
+          <button role="tab" aria-selected="true" data-tab="curl" id="tab-curl" aria-controls="pane">curl</button>
+          <button role="tab" aria-selected="false" data-tab="js" id="tab-js" aria-controls="pane">JavaScript</button>
+          <button role="tab" aria-selected="false" data-tab="dart" id="tab-dart" aria-controls="pane">Dart</button>
+        </div>
+        <button class="copy" id="copy" type="button" aria-label="Copy example">Copy</button>
+        <pre id="pane" role="tabpanel" tabindex="0"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">In the docs</div>
+        <h2>Every endpoint, grouped the way the app is.</h2>
+        <p>Read straight from the live specification, so this list is always current.</p>
+      </div>
+      <div class="stats" id="stats" aria-live="polite">
+        <div><b id="n-ops">…</b><span>Endpoints</span></div>
+        <div><b id="n-groups">…</b><span>Groups</span></div>
+        <div><b>v1</b><span>Version</span></div>
+      </div>
+      <nav class="groups" id="groups" aria-label="API groups"></nav>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>A Good Fit · from GoodCo Bike Club, Brooklyn</span>
+    <span><a href="/docs/">Try it</a><a href="/redoc/">Reference</a><a href="/openapi.json">OpenAPI spec</a><a href="/api/health/">Status</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var base = location.origin;
+  var esc = function (s) { return s.replace(/[&<>]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]; }); };
+  var samples = {
+    curl:
+      '<span class="c"># 1. Sign in</span>\n' +
+      '<span class="k">curl</span> -X POST ' + base + '/api/auth/login/ \\\n' +
+      '  -H <span class="s">"Content-Type: application/json"</span> \\\n' +
+      '  -d <span class="s">\'{"email": "you@example.com", "password": "…"}\'</span>\n\n' +
+      '<span class="c"># 2. Use tokens.access from the reply</span>\n' +
+      '<span class="k">curl</span> ' + base + '/api/social/home/ \\\n' +
+      '  -H <span class="s">"Authorization: Bearer $ACCESS"</span>',
+    js:
+      '<span class="k">const</span> api = <span class="s">"' + base + '/api"</span>;\n\n' +
+      '<span class="k">const</span> { tokens } = <span class="k">await</span> fetch(`${api}/auth/login/`, {\n' +
+      '  method: <span class="s">"POST"</span>,\n' +
+      '  headers: { <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span> },\n' +
+      '  body: JSON.stringify({ email, password }),\n' +
+      '}).then(r =&gt; r.json());\n\n' +
+      '<span class="k">const</span> home = <span class="k">await</span> fetch(`${api}/social/home/`, {\n' +
+      '  headers: { Authorization: `Bearer ${tokens.access}` },\n' +
+      '}).then(r =&gt; r.json());',
+    dart:
+      '<span class="k">final</span> api = <span class="s">\'' + base + '/api\'</span>;\n\n' +
+      '<span class="k">final</span> login = <span class="k">await</span> http.post(\n' +
+      '  Uri.parse(<span class="s">\'$api/auth/login/\'</span>),\n' +
+      '  headers: {<span class="s">\'Content-Type\'</span>: <span class="s">\'application/json\'</span>},\n' +
+      '  body: jsonEncode({<span class="s">\'email\'</span>: email, <span class="s">\'password\'</span>: password}),\n' +
+      ');\n' +
+      '<span class="k">final</span> access = jsonDecode(login.body)[<span class="s">\'tokens\'</span>][<span class="s">\'access\'</span>];\n\n' +
+      '<span class="k">final</span> home = <span class="k">await</span> http.get(\n' +
+      '  Uri.parse(<span class="s">\'$api/social/home/\'</span>),\n' +
+      '  headers: {<span class="s">\'Authorization\'</span>: <span class="s">\'Bearer $access\'</span>},\n' +
+      ');'
+  };
+  var pane = document.getElementById('pane');
+  var tabs = document.querySelectorAll('[data-tab]');
+  function show(name) {
+    pane.innerHTML = samples[name];
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    pane.setAttribute('aria-labelledby', 'tab-' + name);
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { show(t.dataset.tab); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var list = Array.prototype.slice.call(tabs), i = list.indexOf(t);
+      var next = list[(i + (e.key === 'ArrowRight' ? 1 : list.length - 1)) % list.length];
+      next.focus(); show(next.dataset.tab);
+    });
+  });
+  show('curl');
+  document.getElementById('copy').addEventListener('click', function (e) {
+    var btn = e.currentTarget;
+    navigator.clipboard && navigator.clipboard.writeText(pane.textContent).then(function () {
+      btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+    });
+  });
+
+  var status = document.getElementById('status');
+  fetch('/api/health/', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function () { status.className = 'status ok'; status.lastChild.textContent = 'All systems running'; })
+    .catch(function () { status.className = 'status down'; status.lastChild.textContent = 'The API isn’t answering right now'; });
+
+  fetch('/openapi.json').then(function (r) { return r.json(); }).then(function (spec) {
+    var counts = {}, total = 0;
+    Object.keys(spec.paths).forEach(function (p) {
+      Object.keys(spec.paths[p]).forEach(function (m) {
+        var op = spec.paths[p][m];
+        if (!op || !op.tags) return;
+        total++; counts[op.tags[0]] = (counts[op.tags[0]] || 0) + 1;
+      });
+    });
+    document.getElementById('n-ops').textContent = total;
+    document.getElementById('n-groups').textContent = (spec.tags || []).length;
+    var nav = document.getElementById('groups');
+    (spec.tags || []).forEach(function (t) {
+      var a = document.createElement('a');
+      a.href = '/docs/#/' + encodeURIComponent(t.name);
+      a.title = t.description || '';
+      a.innerHTML = esc(t.name) + '<small>' + (counts[t.name] || 0) + '</small>';
+      nav.appendChild(a);
+    });
+  }).catch(function () {
+    document.getElementById('n-ops').textContent = '160+';
+    document.getElementById('n-groups').textContent = '17';
+  });
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,16 @@
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+.env
+.env.*
+!.env*.example
+media
+staticfiles
+logs
+*.log
+*.bak
+db.sqlite3
+deploy/*.local

@@ -125,7 +125,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def attendees(self, request, pk=None):
         """Get list of attendees for an event"""
         event = self.get_object()
-        rsvps = event.rsvps.filter(status='going')
+        from apps.safety.visibility import blocked_ids
+        rsvps = event.rsvps.filter(status='going').exclude(user_id__in=blocked_ids(request.user))
         serializer = EventRSVPSerializer(rsvps, many=True)
         return Response(serializer.data)
 

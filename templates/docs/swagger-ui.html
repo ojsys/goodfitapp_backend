@@ -1,0 +1,87 @@
+{% extends "drf-yasg/swagger-ui.html" %}
+{% block title %}Try it · A Good Fit API{% endblock %}
+{% block extra_head %}<meta name="viewport" content="width=device-width, initial-scale=1">{% endblock %}
+{% block favicon %}<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%236B7F3C'/%3E%3Ccircle cx='16' cy='16' r='5.5' fill='%23F4EFE7'/%3E%3C/svg%3E">{% endblock %}
+{% block extra_styles %}
+{% include "docs/_brand.html" %}
+<style>
+  .swagger-ui, .swagger-ui .opblock-tag, .swagger-ui .opblock .opblock-summary-description,
+  .swagger-ui .info, .swagger-ui .btn, .swagger-ui select, .swagger-ui input, .swagger-ui textarea,
+  .swagger-ui table, .swagger-ui .model, .swagger-ui .parameter__name, .swagger-ui .response-col_status,
+  .swagger-ui .tab li, .swagger-ui label, .swagger-ui .markdown p, .swagger-ui .renderedMarkdown p {
+    font-family: var(--sans) !important; color: var(--ink);
+  }
+  .swagger-ui .topbar { display: none; }
+  .swagger-ui .wrapper { max-width: 1240px; padding: 0 20px; }
+  .swagger-ui .info { margin: 36px 0 18px; }
+  .swagger-ui .info .title { font-family: var(--display) !important; font-size: 44px; letter-spacing: -.02em; color: var(--ink); }
+  .swagger-ui .info .title small { background: var(--olive-tint); top: -6px; }
+  .swagger-ui .info .title small pre { color: var(--olive-deep); font-family: var(--sans); font-weight: 700; }
+  .swagger-ui .info .title small.version-stamp { background: var(--clay-tint); }
+  .swagger-ui .info .title small.version-stamp pre { color: var(--clay); }
+  .swagger-ui .info .base-url { color: var(--ink-muted); font-family: var(--mono); }
+  .swagger-ui .info .description { max-width: 760px; }
+  .swagger-ui .info .description p, .swagger-ui .info li { font-size: 15.5px; line-height: 1.6; color: var(--ink); }
+  .swagger-ui .info h3 { font-family: var(--display) !important; font-size: 21px; margin: 22px 0 6px; color: var(--ink); }
+  .swagger-ui .info code, .swagger-ui .markdown code, .swagger-ui .renderedMarkdown code {
+    font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); color: var(--olive-deep);
+    border-radius: 6px; padding: 1px 6px; font-size: 13px;
+  }
+  .swagger-ui .info a { color: var(--olive-deep); }
+  .swagger-ui .scheme-container { background: transparent; box-shadow: none; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
+  .swagger-ui .btn.authorize { border-color: var(--olive); color: var(--olive-deep); background: var(--surface); border-radius: 12px; font-weight: 700; padding: 9px 18px; }
+  .swagger-ui .btn.authorize svg { fill: var(--olive-deep); }
+  .swagger-ui .opblock-tag-section { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; margin: 14px 0; padding: 0 18px; }
+  .swagger-ui .opblock-tag { border-bottom: 0; padding: 16px 0; }
+  .swagger-ui .opblock-tag > a, .swagger-ui .opblock-tag span { font-family: var(--display) !important; font-weight: 700; font-size: 22px; color: var(--ink); letter-spacing: -.01em; }
+  .swagger-ui .opblock-tag small { font-family: var(--sans) !important; color: var(--ink-muted); font-size: 14px; padding-left: 14px; }
+  .swagger-ui .opblock-tag svg { fill: var(--ink-muted); }
+  .swagger-ui .opblock-tag-section.is-open { padding-bottom: 10px; }
+  .swagger-ui .opblock { border-radius: 12px; box-shadow: none; margin: 0 0 8px; }
+  .swagger-ui .opblock .opblock-summary { padding: 8px 10px; }
+  .swagger-ui .opblock .opblock-summary-method { border-radius: 8px; font-family: var(--sans); font-weight: 700; min-width: 74px; font-size: 13px; }
+  .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-path__deprecated { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+  .swagger-ui .opblock .opblock-summary-description { color: var(--ink-muted); font-size: 14px; }
+  .swagger-ui .opblock.opblock-get { background: var(--olive-wash); border-color: #C9D3AE; }
+  .swagger-ui .opblock.opblock-get .opblock-summary-method { background: var(--olive); }
+  .swagger-ui .opblock.opblock-get .opblock-summary { border-color: #C9D3AE; }
+  .swagger-ui .opblock.opblock-post { background: #FBF4EE; border-color: #E5C7AE; }
+  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: var(--clay); }
+  .swagger-ui .opblock.opblock-post .opblock-summary { border-color: #E5C7AE; }
+  .swagger-ui .opblock.opblock-patch, .swagger-ui .opblock.opblock-put { background: #FBF7EC; border-color: #E6D6A9; }
+  .swagger-ui .opblock.opblock-patch .opblock-summary-method, .swagger-ui .opblock.opblock-put .opblock-summary-method { background: var(--gold-deep); }
+  .swagger-ui .opblock.opblock-patch .opblock-summary, .swagger-ui .opblock.opblock-put .opblock-summary { border-color: #E6D6A9; }
+  .swagger-ui .opblock.opblock-delete { background: #FBF0EE; border-color: #E8C1BB; }
+  .swagger-ui .opblock.opblock-delete .opblock-summary-method { background: var(--danger); }
+  .swagger-ui .opblock.opblock-delete .opblock-summary { border-color: #E8C1BB; }
+  .swagger-ui .opblock .opblock-section-header { background: rgba(255,255,255,.7); box-shadow: none; }
+  .swagger-ui .opblock .opblock-section-header h4 { font-family: var(--sans); font-weight: 700; }
+  .swagger-ui .btn { border-radius: 10px; box-shadow: none; }
+  .swagger-ui .btn.execute { background: var(--olive); border-color: var(--olive); }
+  .swagger-ui .btn.try-out__btn { border-color: var(--olive); color: var(--olive-deep); }
+  .swagger-ui .btn.cancel { border-color: var(--danger); color: var(--danger); }
+  .swagger-ui input[type=text], .swagger-ui textarea, .swagger-ui select { border: 1px solid var(--line) !important; border-radius: 10px !important; }
+  .swagger-ui textarea { font-family: var(--mono) !important; }
+  .swagger-ui .highlight-code > .microlight, .swagger-ui .microlight { border-radius: 10px; font-family: var(--mono) !important; background: #2B3118 !important; }
+  .swagger-ui .model-box, .swagger-ui section.models { border-radius: 14px; border-color: var(--line); background: var(--surface); }
+  .swagger-ui section.models h4 { font-family: var(--display) !important; }
+  .swagger-ui .dialog-ux .modal-ux { border-radius: 18px; border-color: var(--line); }
+  .swagger-ui .dialog-ux .modal-ux-header h3 { font-family: var(--display) !important; }
+  .swagger-ui .parameter__name.required::after { color: var(--danger); }
+  .swagger-ui .parameter__name.required span { color: var(--danger) !important; }
+  .swagger-ui .response-col_status { font-weight: 700; }
+  .swagger-ui .filter-container .operation-filter-input { border-radius: 12px; border: 1px solid var(--line); padding: 10px 14px; }
+  .agf-foot { max-width: 1240px; margin: 30px auto 40px; padding: 0 20px; font: 14px/1.6 var(--sans); color: var(--ink-muted); }
+  @media (max-width: 640px) {
+    .swagger-ui .info .title { font-size: 32px; }
+    .swagger-ui .wrapper { padding: 0 16px; }
+    .swagger-ui .opblock-tag-section { padding: 0 14px; }
+    .swagger-ui .opblock-tag { flex-wrap: wrap; align-items: flex-start; }
+    .swagger-ui .opblock-tag > a { flex: 1 1 auto; }
+    .swagger-ui .opblock-tag small { order: 3; flex: 1 0 100%; padding: 6px 0 0; }
+    .swagger-ui .opblock .opblock-summary-description { display: none; }
+  }
+</style>
+{% endblock %}
+{% block extra_body %}{% with page='swagger' %}{% include "docs/_bar.html" %}{% endwith %}{% endblock %}
+{% block footer %}<p class="agf-foot">A Good Fit · from GoodCo Bike Club, Brooklyn</p>{% endblock %}

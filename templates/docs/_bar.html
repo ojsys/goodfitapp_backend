@@ -1,0 +1,14 @@
+<header class="agf-bar">
+  <div class="agf-bar-in">
+    <a class="agf-mark" href="/" aria-label="A Good Fit API home">
+      <span class="agf-dot" aria-hidden="true"><i></i></span><b>A Good Fit</b>
+    </a>
+    <span class="agf-pill">API v1</span>
+    <nav class="agf-nav" aria-label="Documentation">
+      <a class="wide" href="/">Overview</a>
+      <a href="/docs/" {% if page == 'swagger' %}aria-current="page"{% endif %}>Try it</a>
+      <a href="/redoc/" {% if page == 'redoc' %}aria-current="page"{% endif %}>Reference</a>
+      <a class="wide" href="/openapi.json">OpenAPI</a>
+    </nav>
+  </div>
+</header>

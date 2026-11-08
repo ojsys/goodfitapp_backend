@@ -1,7 +1,7 @@
 """Project-level views."""
 
 from django.urls import reverse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -34,3 +34,18 @@ def api_root(request):
             'redoc': request.build_absolute_uri(reverse('schema-redoc')),
         },
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def health(request):
+    """For the container health check and uptime monitors: 200 when the
+    database answers, 503 when it doesn't."""
+    from django.db import connection
+    try:
+        with connection.cursor() as c:
+            c.execute('SELECT 1')
+    except Exception:
+        return Response({'status': 'db_unavailable'}, status=503)
+    return Response({'status': 'ok'})

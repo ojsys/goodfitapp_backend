@@ -36,6 +36,10 @@ INSTALLED_APPS = [
     'apps.events',
     'apps.matching',
     'apps.messaging',
+    'apps.social',
+    'apps.routes',
+    'apps.chats',
+    'apps.safety',
 ]
 
 MIDDLEWARE = [
@@ -99,9 +103,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
+    # MemberJWTAuthentication refuses accounts that haven't finished sign-up
+    # (age gate, guidelines) everywhere except onboarding views.
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.users.authentication.MemberJWTAuthentication',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '30/hour',
+        'password_reset': '5/hour',
+        # Requirements: rate-limit messaging and reports.
+        'messages': '120/hour',
+        'reports': '20/hour',
+    },
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
@@ -145,3 +158,55 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+# --- A Good Fit accounts -------------------------------------------------------
+
+# Bumped when the Community Guidelines change; agreements store this version.
+GUIDELINES_VERSION = '2026-10-29'
+
+# Fernet key for birthdays (generate: python -c "from cryptography.fernet import
+# Fernet; print(Fernet.generate_key().decode())"). Required in production;
+# development derives one from SECRET_KEY.
+BIRTHDAY_ENCRYPTION_KEY = config('BIRTHDAY_ENCRYPTION_KEY', default='')
+
+# Sign in with Apple: the app's bundle ID (and Services ID if web is added).
+APPLE_CLIENT_IDS = [c for c in config('APPLE_CLIENT_IDS', default='').split(',') if c]
+# Google OAuth client IDs whose ID tokens we accept (iOS, Android, web).
+GOOGLE_CLIENT_IDS = [c for c in config('GOOGLE_CLIENT_IDS', default='').split(',') if c]
+
+# Public base URL used in password reset emails.
+PUBLIC_BASE_URL = config('PUBLIC_BASE_URL', default='http://localhost:8000')
+
+# Create a route (Phase 3): road snapping and elevation. Empty = straight
+# lines and no climb. See apps/routes/services.py.
+ROUTING_URL_BIKE = config('ROUTING_URL_BIKE', default='')
+ROUTING_URL_FOOT = config('ROUTING_URL_FOOT', default='')
+ELEVATION_URL = config('ELEVATION_URL', default='')
+# Free members can keep this many routes; Plus is unlimited (requirements: Plans).
+FREE_ROUTE_LIMIT = config('FREE_ROUTE_LIMIT', default=5, cast=int)
+
+
+# --- API docs (/docs/, /redoc/, /openapi.json) ---------------------------------
+SWAGGER_SETTINGS = {
+    'DEFAULT_INFO': 'goodfit_api.api_docs.INFO',
+    'DEFAULT_AUTO_SCHEMA_CLASS': 'goodfit_api.api_docs.AgfAutoSchema',
+    'DEFAULT_GENERATOR_CLASS': 'goodfit_api.api_docs.AgfSchemaGenerator',
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey', 'in': 'header', 'name': 'Authorization',
+            'description': 'Paste: Bearer <access token from /api/auth/login/>',
+        },
+    },
+    'PERSIST_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': False,
+    'DOC_EXPANSION': 'none',
+    'DEEP_LINKING': True,
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'DEFAULT_MODEL_DEPTH': 2,
+    'DISPLAY_OPERATION_ID': False,
+    'OPERATIONS_SORTER': None,
+    'TAGS_SORTER': None,
+}
+REDOC_SETTINGS = {'HIDE_HOSTNAME': False, 'EXPAND_RESPONSES': '200,201', 'PATH_IN_MIDDLE': True}

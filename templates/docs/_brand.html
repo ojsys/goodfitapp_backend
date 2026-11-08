@@ -1,0 +1,42 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F4EFE7; --surface: #FFFFFF; --line: #E2DDD1; --line-soft: #EBE6DB;
+    --ink: #31391B; --ink-muted: #6E6A5C;
+    --olive: #6B7F3C; --olive-deep: #4E5E2B; --olive-tint: #EEF2E2; --olive-wash: #F7F9F1;
+    --clay: #A65F2E; --clay-tint: #F2E2D4; --gold-deep: #7D6224; --gold-tint: #F3E8CC;
+    --coral: #C84B3C; --danger: #A8392C; --green-tint: #E6EBD8;
+    --sans: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --display: "Fraunces", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  html, body { background: var(--cream); margin: 0; }
+  .agf-bar {
+    position: sticky; top: 0; z-index: 50; background: rgba(244,239,231,.92);
+    backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line); font-family: var(--sans);
+  }
+  .agf-bar-in { max-width: 1240px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 18px; }
+  .agf-mark { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+  .agf-mark b { font-family: var(--display); font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+  .agf-dot { width: 26px; height: 26px; border-radius: 50%; background: var(--olive); display: grid; place-items: center; }
+  .agf-dot i { width: 9px; height: 9px; border-radius: 50%; background: var(--cream); display: block; }
+  .agf-pill { font: 700 11px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--olive-deep);
+    background: var(--olive-tint); border-radius: 999px; padding: 6px 9px; }
+  .agf-nav { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+  .agf-nav a { font: 600 14px/1 var(--sans); color: var(--ink-muted); text-decoration: none; padding: 10px 12px; border-radius: 10px; }
+  .agf-nav a:hover { color: var(--ink); background: var(--surface); }
+  .agf-nav a[aria-current="page"] { color: var(--olive-deep); background: var(--olive-tint); }
+  .agf-nav a:focus-visible, .agf-mark:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+  .agf-mark b { white-space: nowrap; }
+  @media (max-width: 640px) {
+    .agf-bar-in { gap: 10px; padding: 10px 16px; }
+    .agf-pill, .agf-nav .wide { display: none; }
+    .agf-mark b { font-size: 19px; }
+    .agf-nav { flex-wrap: nowrap; gap: 0; }
+    .agf-nav a { padding: 9px 8px; font-size: 14px; }
+  }
+</style>

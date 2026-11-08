@@ -10,6 +10,7 @@ from .views import (
     UpdateDailySummaryView
 )
 from .live_views import LiveActivityViewSet
+from .record_views import ActivityDetailView as RecordedDetailView, ActivityPhotoView, RecordView
 
 app_name = 'activities'
 
@@ -21,6 +22,10 @@ urlpatterns = [
     # Activity CRUD
     path('', ActivityListCreateView.as_view(), name='activity-list-create'),
     path('<int:pk>/', ActivityDetailView.as_view(), name='activity-detail'),
+    # Phase 2: Record -> Save -> Activity detail.
+    path('record/', RecordView.as_view(), name='activity-record'),
+    path('<int:pk>/detail/', RecordedDetailView.as_view(), name='activity-view'),
+    path('<int:pk>/photos/', ActivityPhotoView.as_view(), name='activity-photos'),
     path('recent/', RecentActivitiesView.as_view(), name='recent-activities'),
     path('feed/', FeedView.as_view(), name='activity-feed'),
     path('stats/', ActivityStatsView.as_view(), name='activity-stats'),

@@ -54,6 +54,31 @@ class Event(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
+    # Group-ride details shown on Home cards (Core-Feed, Core-FeedNew).
+    # Phase 3 adds kinds, meeting spot and routes.
+    club = models.ForeignKey('social.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
+    leader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='led_events')
+    activity_type = models.CharField(max_length=20, default='ride')
+    distance_m = models.FloatField(null=True, blank=True)
+    route_name = models.CharField(max_length=120, blank=True)
+    pace = models.CharField(max_length=40, blank=True, help_text='e.g. "social pace", "Easy pace"')
+    no_drop = models.BooleanField(default=False)
+    # "Great first ride" on the new-member Home.
+    beginner_friendly = models.BooleanField(default=False)
+
+    # Phase 3 (Community-Events, Community-HostEvent).
+    KINDS = [('club', 'Club'), ('community', 'Community'), ('featured', 'Featured')]
+    kind = models.CharField(max_length=10, choices=KINDS, default='club')
+    route = models.ForeignKey('routes.Route', on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
+    duration_min = models.PositiveIntegerField(null=True, blank=True, help_text='Classes: "60 min"')
+    LEVELS = [('easy', 'Easy'), ('moderate', 'Moderate'), ('hard', 'Hard')]
+    level = models.CharField(max_length=10, choices=LEVELS, default='easy')
+    WHO = [('club', 'Club members'), ('anyone', 'Anyone'), ('invite', 'Invite only')]
+    who_can_join = models.CharField(max_length=10, choices=WHO, default='anyone')
+    # Featured events (Phase 10): "Hosted by Lumen Yoga Studio · Verified business".
+    host_label = models.CharField(max_length=120, blank=True)
+
     # Capacity
     max_attendees = models.IntegerField(null=True, blank=True, help_text='Leave blank for unlimited')
     is_full = models.BooleanField(default=False)

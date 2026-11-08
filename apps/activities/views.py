@@ -280,5 +280,6 @@ class FeedView(generics.ListAPIView):
             Q(user__preferences__profile_visibility='public')
             | Q(user__preferences__isnull=True)
         )
-        activity_shared = ~Q(visibility='private')
+        # 'me' is private; 'club' needs the club check the new feed does.
+        activity_shared = Q(visibility__in=['everyone', 'followers'])
         return account_public & activity_shared

@@ -46,3 +46,7 @@ Thumbs.db
 # Migrations (optional - uncomment if you want to ignore)
 # */migrations/*
 # !*/migrations/__init__.py
+
+# Deployment (local server details and downloaded backups)
+deploy/deploy.local
+deploy/backups/

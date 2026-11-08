@@ -43,6 +43,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for User Profile (Full details)"""
 
     photo_url = serializers.SerializerMethodField()
+    # The member's own birthday, read-only (support changes it). Only ever
+    # sent to the member themselves.
+    birthday = serializers.SerializerMethodField()
+    age = serializers.IntegerField(read_only=True)
+    next_step = serializers.CharField(read_only=True)
+    is_member = serializers.BooleanField(read_only=True)
+    match_opted_in = serializers.BooleanField(read_only=True)
+    # 'apple' / 'google' when the account was created with one (no password).
+    signin_provider = serializers.SerializerMethodField()
     goals = UserGoalsSerializer(read_only=True)
     stats = UserStatsSerializer(read_only=True)
     preferences = UserPreferencesSerializer(read_only=True)
@@ -56,15 +65,32 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'display_name', 'first_name', 'last_name', 'full_name',
             'avatar_url', 'avatar', 'photo_url', 'bio', 'online_status',
-            'last_seen', 'weight_kg', 'height_cm', 'date_of_birth',
+            'last_seen', 'weight_kg', 'height_cm',
+            'birthday', 'age', 'neighborhood', 'headline', 'intents', 'interests',
+            'units', 'plan', 'guidelines_version', 'guidelines_agreed_at',
+            'next_step', 'is_member', 'match_opted_in', 'signin_provider',
             'goals', 'stats', 'preferences', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'email', 'created_at', 'updated_at', 'last_seen', 'avatar',
+            'intents', 'interests', 'plan', 'guidelines_version', 'guidelines_agreed_at',
         ]
 
     def get_photo_url(self, obj):
         return obj.photo_url(self.context.get('request'))
+
+    def get_signin_provider(self, obj):
+        if obj.has_usable_password():
+            return None
+        return 'apple' if obj.apple_sub else 'google' if obj.google_sub else None
+
+    def get_birthday(self, obj):
+        b = obj.birthday
+        return b.isoformat() if b else None
+
+
+# The signed-in member's own profile.
+MeSerializer = UserProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -83,58 +109,6 @@ class UserSerializer(serializers.ModelSerializer):
     def get_photo_url(self, obj):
         return obj.photo_url(self.context.get('request'))
         read_only_fields = ['id', 'email']
-
-
-class RegisterSerializer(serializers.ModelSerializer):
-    """Serializer for user registration"""
-
-    password = serializers.CharField(write_only=True, min_length=8, style={'input_type': 'password'})
-    password_confirm = serializers.CharField(write_only=True, min_length=8, style={'input_type': 'password'})
-
-    class Meta:
-        model = User
-        fields = ['email', 'display_name', 'password', 'password_confirm']
-
-    def validate(self, data):
-        """Validate passwords match"""
-        if data['password'] != data['password_confirm']:
-            raise serializers.ValidationError({"password": "Passwords do not match"})
-        return data
-
-    def create(self, validated_data):
-        """Create user with hashed password and related models"""
-        # Remove password_confirm from validated data
-        validated_data.pop('password_confirm')
-
-        # Create user
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            display_name=validated_data.get('display_name', '')
-        )
-
-        # Create related models
-        UserGoals.objects.create(user=user)
-        UserStats.objects.create(user=user)
-        UserPreferences.objects.create(user=user)
-
-        # Create matching profile
-        from apps.matching.models import UserProfile
-        UserProfile.objects.create(
-            user=user,
-            age=25,  # Default age, can be updated later
-            location_city='San Francisco',
-            location_state='CA',
-            latitude=37.7749,
-            longitude=-122.4194,
-            fitness_level='beginner',
-            favorite_activities=['Walk', 'Run'],
-            fitness_goals=['Stay Healthy'],
-            looking_for=['workout_partner'],
-            is_active=True,
-        )
-
-        return user
 
 
 class LoginSerializer(serializers.Serializer):
@@ -189,13 +163,15 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
-    """Serializer for updating user profile"""
+    """Edit profile. The birthday is not editable (support only)."""
+
+    bio = serializers.CharField(max_length=150, allow_blank=True, required=False)
 
     class Meta:
         model = User
         fields = [
             'display_name', 'first_name', 'last_name', 'avatar_url', 'bio',
-            'weight_kg', 'height_cm', 'date_of_birth',
+            'weight_kg', 'height_cm', 'neighborhood', 'headline', 'units',
         ]
 
     def update(self, instance, validated_data):

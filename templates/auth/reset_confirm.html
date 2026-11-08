@@ -1,0 +1,20 @@
+{% extends "auth/_base.html" %}
+{% block title %}Set a new password · A Good Fit{% endblock %}
+{% block content %}
+{% if validlink %}
+  <h1>Set a new password</h1>
+  <p>At least 8 characters.</p>
+  <form method="post">{% csrf_token %}
+    <label for="id_new_password1">New password</label>
+    <input type="password" name="new_password1" id="id_new_password1" autocomplete="new-password" required>
+    {% for e in form.new_password1.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    <label for="id_new_password2">Confirm password</label>
+    <input type="password" name="new_password2" id="id_new_password2" autocomplete="new-password" required>
+    {% for e in form.new_password2.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    <button type="submit">Save password</button>
+  </form>
+{% else %}
+  <h1>This link has expired</h1>
+  <p>Reset links work once. Open the app and tap Forgot password? to get a new one.</p>
+{% endif %}
+{% endblock %}
