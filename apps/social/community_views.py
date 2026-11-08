@@ -178,18 +178,20 @@ def create_event(fields, host, club, kind, leader):
     )
 
 
-def approve_suggestion(s, reviewer):
-    """Club team (portal, Phase 10; Django admin for now): approved becomes a
-    club event with the member as ride leader."""
+def approve_suggestion(s, reviewer, checked=False):
+    """Club team (business portal, or the Django admin): approved becomes a
+    club event with the member as ride leader. checked: the portal already
+    checked the reviewer's permission."""
     m = ClubMembership.objects.filter(club=s.club, user=reviewer).first()
-    if not (reviewer.is_staff or (m and m.can('approve_suggestions'))):
+    if not (checked or reviewer.is_staff or (m and m.can('approve_suggestions'))):
         raise PermissionError('Not allowed to approve suggestions for this club')
     with transaction.atomic():
         e = create_event(s.proposal, host=s.member, club=s.club, kind='club', leader=s.member)
         EventRSVP.objects.get_or_create(event=e, user=s.member, defaults={'status': 'going'})
         s.status, s.reviewed_by, s.event = 'approved', reviewer, e
         s.save()
-        ClubTeamLog.objects.create(club=s.club, actor=reviewer, action=f'Approved ride suggestion “{e.title}”')
+        ClubTeamLog.objects.create(club=s.club, actor=reviewer,
+                                   action=f'approved {s.member.first_name}’s suggested ride, {e.title}')
     return e
 
 

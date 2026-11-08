@@ -33,6 +33,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter events based on query params"""
         queryset = super().get_queryset()
+        if self.action == 'check_in':
+            return queryset  # the event may have started already
 
         # Filter by upcoming/past
         time_filter = self.request.query_params.get('time', 'upcoming')
@@ -112,6 +114,25 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated], url_path='check-in')
+    def check_in(self, request, pk=None):
+        """I'm here. For featured events the member can choose to share their
+        name with the business; otherwise businesses only ever see counts."""
+        from apps.social.home import check_in_window
+        event = self.get_object()
+        rsvp = EventRSVP.objects.filter(event=event, user=request.user, status='going').first()
+        if rsvp is None:
+            return Response({'code': 'not_going', 'message': 'RSVP first, then check in at the event.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if not check_in_window(event):
+            return Response({'code': 'not_now', 'message': 'Check-in opens an hour before the start.'},
+                            status=status.HTTP_409_CONFLICT)
+        rsvp.checked_in = True
+        rsvp.check_in_time = rsvp.check_in_time or timezone.now()
+        rsvp.share_name = bool(request.data.get('share_name')) and event.kind == 'featured'
+        rsvp.save(update_fields=['checked_in', 'check_in_time', 'share_name', 'updated_at'])
+        return Response({'checked_in': True, 'share_name': rsvp.share_name})
 
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
     def cancel_rsvp(self, request, pk=None):

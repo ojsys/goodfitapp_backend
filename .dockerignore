@@ -14,3 +14,5 @@ logs
 *.bak
 db.sqlite3
 deploy/*.local
+portal/node_modules
+portal/dist

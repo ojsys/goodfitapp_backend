@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.performance',
     'apps.goodmatch',
     'apps.plus',
+    'apps.business',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS must be before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # business.getlovelly.cloud serves the React business portal.
+    'apps.business.portal.PortalHostMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -241,3 +244,15 @@ GOOGLE_RTDN_TOKEN = config('GOOGLE_RTDN_TOKEN', default='')
 PLUS_TEST_PURCHASES = config('PLUS_TEST_PURCHASES', default=False, cast=bool)
 # Early RSVP: capped rides open to Plus members first, for this long.
 EARLY_RSVP_HOURS = config('EARLY_RSVP_HOURS', default=24, cast=int)
+
+# Business portal (Phase 10). Stripe stays off until the key is set.
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+STRIPE_PRICE_PARTNER = config('STRIPE_PRICE_PARTNER', default='')
+# Breakdowns smaller than this are folded into "Other" so no one stands out.
+BUSINESS_MIN_GROUP = config('BUSINESS_MIN_GROUP', default=10, cast=int)
+# The portal's host (business.getlovelly.cloud); /business/ works on any host.
+BUSINESS_HOST = config('BUSINESS_HOST', default='')
+# The built portal (portal/dist) is served from /static/portal/.
+STATICFILES_DIRS = [('portal', os.path.join(BASE_DIR, 'portal', 'dist'))] \
+    if os.path.isdir(os.path.join(BASE_DIR, 'portal', 'dist')) else []

@@ -31,12 +31,14 @@ class Notification(models.Model):
         ('ride_invite', 'Ride invite'), ('ride_update', 'Ride update'), ('ride_reminder', 'Ride reminder'),
         ('announcement', 'Club announcement'), ('report_update', 'Report update'),
         ('warning', 'Warning'), ('segment', 'Segment'), ('challenge', 'Challenge'), ('match', 'A Good Match'),
+        ('team_invite', 'Club team invite'),
     ]
     CATEGORY = {
         'props': 'props_comments', 'comment': 'props_comments', 'follow': 'props_comments',
         'wave': 'props_comments', 'ride_invite': 'ride_reminders', 'ride_update': 'ride_reminders',
         'ride_reminder': 'ride_reminders', 'announcement': 'club_announcements', 'report_update': 'safety',
         'warning': 'safety', 'segment': 'props_comments', 'challenge': 'props_comments', 'match': 'match',
+        'team_invite': 'club_announcements',
     }
 
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')

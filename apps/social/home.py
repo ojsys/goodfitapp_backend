@@ -123,6 +123,20 @@ def suggested_clubs(user, limit=3):
     }
 
 
+def check_in_window(event):
+    """Check-in opens an hour before the start and closes six hours after."""
+    now = timezone.now()
+    return event.start_time - timedelta(hours=1) <= now <= event.start_time + timedelta(hours=6)
+
+
+def check_in_state(event, user, going):
+    mine = next((r for r in going if r.user_id == user.id), None)
+    if mine is None or not check_in_window(event):
+        return None
+    business = event.host_label.removeprefix('Hosted by ').split(' · ')[0] if event.kind == 'featured' else ''
+    return {'done': mine.checked_in, 'business': business}
+
+
 def event_card(event, user, request=None):
     going = list(event.rsvps.filter(status='going').select_related('user').order_by('created_at'))
     blocked = blocked_ids(user)
@@ -151,6 +165,7 @@ def event_card(event, user, request=None):
         'club_id': event.club_id,
         'capacity': event.max_attendees,
         'early': early_rsvp(event, user),
+        'check_in': check_in_state(event, user, going),
     }
 
 

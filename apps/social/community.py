@@ -3,6 +3,7 @@ Community (Phase 3): the hub, club pages, events browse, hosting and
 Fit Buddies. Data shaping lives here; HTTP in community_views.py.
 """
 
+from apps.business.services import featured_for, pending_invite
 from collections import Counter
 from datetime import datetime, time, timedelta
 
@@ -157,6 +158,8 @@ def club_page(club, user, request=None):
                   'label': ' · '.join(x for x in [t.title, t.role_label] if x)} for t in team],
         'member_preview': [person(m.user, request) for m in preview],
         'tz': str(tz),
+        # An invite to the club team from the business portal.
+        'team_invite': pending_invite(user, club),
     }
 
 
@@ -217,6 +220,8 @@ def hub(user, request=None):
         'messages': messages,
         'buddies': {'count': len(buddies), 'people': [b['person'] for b in buddies[:3]]},
         'match': user.match_opted_in,
+        # Partner placements.
+        'featured': featured_for(user, 'hub', request),
     }
 
 
@@ -275,6 +280,10 @@ def browse(user, day=None, kind=None, request=None):
     day = day or next((d for d in days if by_day[d]), today)
     start = datetime.combine(day, time.min, tzinfo=tz)
     items = window.filter(start_time__gte=start, start_time__lt=start + timedelta(days=1)).order_by('start_time')
+    # The top slot on Events (every package).
+    top = featured_for(user, 'events', request)
+    if top:
+        items = items.exclude(pk=top['id'])
     plans = (Event.objects.filter(rsvps__user=user, rsvps__status='going', is_cancelled=False,
                                   start_time__gte=timezone.now(), start_time__lt=window_start + timedelta(days=7))
              .order_by('start_time'))
@@ -282,6 +291,7 @@ def browse(user, day=None, kind=None, request=None):
         'days': [{'date': d.isoformat(), 'weekday': d.strftime('%a'), 'day': d.day, 'has_events': by_day[d] > 0,
                   'label': ('Today · ' if d == today else '') + d.strftime('%A, %b %-d')} for d in days],
         'date': day.isoformat(),
+        'featured': top,
         'items': [browse_card(e, user, request) for e in items],
         'plans': [{'id': e.id, 'title': e.title, 'activity_type': e.activity_type,
                    'when': e.start_time.astimezone(tz).strftime('%a %-d · %-I:%M %p'),

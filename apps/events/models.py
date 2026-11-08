@@ -148,6 +148,8 @@ class EventRSVP(models.Model):
     # Check-in for attendance tracking
     checked_in = models.BooleanField(default=False)
     check_in_time = models.DateTimeField(null=True, blank=True)
+    # The member chose to share their name with the business at check-in.
+    share_name = models.BooleanField(default=False)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

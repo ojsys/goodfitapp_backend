@@ -3,6 +3,7 @@ Home, feed, posts, props, comments, clubs and people (Phase 2).
 All endpoints require a full member (MemberJWTAuthentication default).
 """
 
+from apps.business.services import featured_for
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
@@ -39,6 +40,8 @@ class HomeView(APIView):
             'week': home.week(user),
             'checklist': cl,
             'upcoming_ride': home.upcoming_group_ride(user, request),
+            # A featured event (Boost and Partner): a card in Home feeds.
+            'featured': featured_for(user, 'home', request),
             # The club you help run first, then the one you joined first.
             'my_clubs': [home.club_card(m.club, user) for m in sorted(
                 ClubMembership.objects.filter(user=user).select_related('club'),

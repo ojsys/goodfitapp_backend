@@ -62,6 +62,7 @@ sync_code() {
     --exclude '*.pyc' --exclude '.env' --exclude '.env.local' --exclude 'media/' \
     --exclude 'staticfiles/' --exclude 'logs/' --exclude '*.log' --exclude '*.bak' \
     --exclude 'deploy/deploy.local' --exclude 'deploy/backups/' --exclude '.DS_Store' \
+    --exclude 'portal/node_modules/' --exclude 'portal/dist/' \
     "$BACKEND/" "$SERVER:$AGF_ROOT/app/"
 }
 

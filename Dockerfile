@@ -1,4 +1,14 @@
 # A Good Fit API: production image (gunicorn behind the stack's nginx).
+
+# The React business portal, built here so the server needs no Node and the
+# whole thing stays one deployment. Django serves it from /static/portal/.
+FROM node:22-alpine AS portal
+WORKDIR /portal
+COPY portal/package.json portal/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY portal/ ./
+RUN npm run build
+
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,6 +28,7 @@ RUN useradd --uid 1000 --create-home app
 # Readable by the app whatever the permissions were on the machine it was
 # copied from.
 COPY --chown=app:app . .
+COPY --from=portal --chown=app:app /portal/dist /app/portal/dist
 RUN mkdir -p /app/media /app/staticfiles /app/logs \
     && chown -R app:app /app/media /app/staticfiles /app/logs \
     && chmod -R u+rwX,go+rX /app && chmod +x /app/deploy/entrypoint.sh

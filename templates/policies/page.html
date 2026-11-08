@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} · A Good Fit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;700&family=Fraunces:opsz,wght@9..144,700&display=swap">
+<style>
+  :root { --cream:#F4EFE7; --ink:#31391B; --muted:#6E6A5C; --olive:#6B7F3C; --olive-tint:#EEF2E2; --line:#E2DDD1; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--cream); color: var(--ink); font-family: 'Inter Tight', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px 72px; }
+  .brand { font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 20px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-size: 38px; line-height: 1.1; margin: 28px 0 10px; }
+  .lede { font-size: 17px; line-height: 1.55; color: var(--muted); }
+  .short { margin: 24px 0; padding: 18px 20px; border-radius: 16px; background: var(--olive); color: #fff; font-family: Fraunces, Georgia, serif; font-size: 24px; }
+  section { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-top: 14px; }
+  h2 { font-size: 18px; }
+  section p { margin-top: 4px; color: var(--muted); line-height: 1.5; }
+  ul { margin: 10px 0 0 20px; line-height: 1.55; }
+  li { margin-top: 4px; }
+  .foot { margin-top: 28px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  a { color: #4E5E2B; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">A Good Fit</div>
+  <h1>{{ title }}</h1>
+  <p class="lede">{{ lede }}</p>
+  {% if short %}<div class="short">{{ short }}</div>{% endif %}
+  {% for s in sections %}
+  <section>
+    <h2>{{ s.title }}</h2>
+    {% if s.summary %}<p>{{ s.summary }}</p>{% endif %}
+    {% if s.points %}<ul>{% for p in s.points %}<li>{{ p }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endfor %}
+  <p class="foot">{{ foot }} Version {{ version }}.</p>
+</main>
+</body>
+</html>

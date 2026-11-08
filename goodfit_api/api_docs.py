@@ -61,6 +61,8 @@ TAG_RULES = [
     (r'^/api/safety/', 'Safety'),
     (r'^/api/match/', 'A Good Match'),
     (r'^/api/plus/', 'A Good Fit Plus'),
+    (r'^/api/business/(featured|invites)/', 'Featured events (app)'),
+    (r'^/api/business/', 'Business portal'),
     (r'^/api/matching/', 'Legacy · matching'),
     (r'^/api/messaging/', 'Legacy · messaging'),
 ]
@@ -102,6 +104,13 @@ TAGS = [
                         'checks it with the store and keeps `plan` in step with renewals, grace periods and refunds '
                         'from the store webhooks. Plus-only actions answer `402 plus_required` '
                         '(or `403 early_rsvp` for capped rides that haven’t opened to everyone yet).'),
+    ('Featured events (app)', 'Members: a featured card was seen or tapped (counted once a day per member), and '
+                              'answering a club team invite. Featured cards arrive in `/api/social/events/` '
+                              '(`featured`, the top slot), `/api/social/home/` and `/api/social/community/`, each with '
+                              '"Why am I seeing this?" text.'),
+    ('Business portal', 'The React portal at business.getlovelly.cloud. Session cookie and CSRF token (from '
+                        '`session/`), not app tokens. Every account route checks the person’s role and the club’s '
+                        'permission grid. Reporting is counts only; groups under 10 fold into Other.'),
     ('Legacy · live tracking', 'Older server-side tracking. New clients record on the phone and save with `POST /api/activities/record/`.'),
     ('Legacy · messaging', 'Older 1:1 conversations, kept for old app versions. Use Chats.'),
     ('Legacy · matching', 'The original fitness-buddy swipes, kept for old app versions. Use A Good Match.'),
