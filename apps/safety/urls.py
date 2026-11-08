@@ -9,4 +9,5 @@ urlpatterns = [
     path('blocks/', views.BlockListView.as_view(), name='blocks'),
     path('blocks/<int:pk>/', views.BlockView.as_view(), name='block'),
     path('hide/<str:kind>/<int:pk>/', views.HideView.as_view(), name='hide'),
+    path('contact/', views.ContactView.as_view(), name='contact'),
 ]

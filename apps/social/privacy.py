@@ -46,7 +46,7 @@ def visible_range(points, owner, zones=None):
     zones, then, if the owner hides track ends, END_TRIM_M more from each end.
     """
     if zones is None:
-        zones = list(owner.privacy_zones.all())
+        zones = list(owner.privacy_zones.all()) if getattr(owner, 'privacy_zones_on', True) else []
     i, j = 0, len(points)
     if zones:
         while i < j and _in_zone(points[i], zones):

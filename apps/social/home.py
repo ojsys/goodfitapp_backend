@@ -41,8 +41,8 @@ def join_list(words):
 
 def header_counts(user):
     from apps.chats.services import total_unread
-    # Notifications arrive in Phase 6.
-    return {'messages': total_unread(user), 'notifications': 0}
+    from apps.notifications.services import unread_count
+    return {'messages': total_unread(user), 'notifications': unread_count(user)}
 
 
 # --------------------------------------------------------------- this week

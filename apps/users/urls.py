@@ -3,6 +3,8 @@ URL patterns for User authentication
 """
 
 from django.urls import path
+
+from . import account_views
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .signup_views import (
@@ -37,6 +39,13 @@ urlpatterns = [
 
     # Profile Management
     path('profile/', ProfileView.as_view(), name='profile'),
+    # Phase 6: You, Edit profile, Settings.
+    path('me/', account_views.MeView.as_view(), name='me'),
+    path('settings/', account_views.SettingsView.as_view(), name='settings'),
+    path('email/', account_views.EmailView.as_view(), name='email'),
+    path('password/', account_views.PasswordView.as_view(), name='password'),
+    path('export/', account_views.ExportView.as_view(), name='export'),
+    path('delete/', account_views.DeleteAccountView.as_view(), name='delete'),
     path('profile/update/', UpdateProfileView.as_view(), name='update-profile'),
     path('profile/avatar/', AvatarUploadView.as_view(), name='profile-avatar'),
     path('password/change/', ChangePasswordView.as_view(), name='change-password'),

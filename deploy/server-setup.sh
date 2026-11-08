@@ -103,10 +103,12 @@ chmod 600 "$AGF_ROOT/.env"
 /opt/server/bin/site add "$APP" "$DOMAIN" "$AGF_PORT" 25MB
 
 # ----------------------------------------------------------------- backups
-say "Nightly database backup at 03:15 (kept 14 days) in $AGF_ROOT/backups"
+say "Scheduled jobs: nightly backup at 03:15 (kept 14 days), hourly ride reminders"
 cat > "/etc/cron.d/$APP" <<CRON
 # $APP: nightly backup (see $AGF_ROOT/app/deploy/backup.sh)
 15 3 * * * root AGF_ROOT=$AGF_ROOT bash $AGF_ROOT/app/deploy/backup.sh >> $AGF_ROOT/data/logs/backup.log 2>&1
+# $APP: day-before ride reminders (Phase 6)
+5 * * * * root docker compose -f $AGF_ROOT/app/deploy/docker-compose.yml --env-file $AGF_ROOT/.env exec -T web python manage.py send_reminders >> $AGF_ROOT/data/logs/reminders.log 2>&1
 CRON
 
 say "Compartment ready: $AGF_ROOT · 127.0.0.1:$AGF_PORT · https://$DOMAIN"

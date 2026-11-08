@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import community_views as cv
+from . import profile, community_views as cv
 from . import views
 
 app_name = 'social'
@@ -16,6 +16,10 @@ urlpatterns = [
     path('comments/<int:pk>/', views.CommentDeleteView.as_view(), name='comment-delete'),
     path('crew/', views.CrewView.as_view(), name='crew'),
     path('clubs/<int:pk>/join/', views.ClubJoinView.as_view(), name='club-join'),
+    path('me/profile/', profile.MyProfileView.as_view(), name='my-profile'),
+    path('people/<int:pk>/', profile.PersonView.as_view(), name='person'),
+    path('people/<int:pk>/followers/', profile.FollowListView.as_view(which='followers'), name='followers'),
+    path('people/<int:pk>/following/', profile.FollowListView.as_view(which='following'), name='following'),
     path('people/<int:pk>/follow/', views.FollowView.as_view(), name='follow'),
     path('people/<int:pk>/wave/', views.WaveView.as_view(), name='wave'),
     path('privacy-zones/', views.PrivacyZonesView.as_view(), name='privacy-zones'),

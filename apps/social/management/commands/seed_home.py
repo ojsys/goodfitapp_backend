@@ -250,5 +250,19 @@ class Command(BaseCommand):
                                                      body='See you Saturday? I’ll be at the track entrance.')
                     dm.last_message_at = msg.created_at
                     dm.save(update_fields=['last_message_at'])
+                # Phase 6: things to be notified about (signals make the notifications).
+                from apps.social.models import RideInvite
+                mine = Activity.objects.filter(user=me).order_by('-start_time').first()
+                if mine:
+                    for key in ('alex', 'sasha', 'marvel'):
+                        Prop.objects.get_or_create(user=people[key], activity=mine)
+                    if not Comment.objects.filter(author=people['alex'], activity=mine).exists():
+                        Comment.objects.create(author=people['alex'], activity=mine,
+                                               text='4 seconds off the PR on Park Drive. Saturday you get it.')
+                Follow.objects.get_or_create(follower=people['nia'] if 'nia' in people else people['jordan'],
+                                             followee=me)
+                shakeout = Event.objects.filter(title='Greenpoint Shakeout').first()
+                if shakeout:
+                    RideInvite.objects.get_or_create(sender=people['jordan'], recipient=me, event=shakeout)
             self.stdout.write(f'Set up {me.email} ({"new member" if o["new"] else "member with follows and a club"}).')
         self.stdout.write(self.style.SUCCESS('Demo data ready.'))

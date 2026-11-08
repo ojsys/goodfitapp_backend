@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.routes',
     'apps.chats',
     'apps.safety',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,7 @@ REST_FRAMEWORK = {
         # Requirements: rate-limit messaging and reports.
         'messages': '120/hour',
         'reports': '20/hour',
+        'export': '5/day',
     },
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -210,3 +212,10 @@ SWAGGER_SETTINGS = {
     'TAGS_SORTER': None,
 }
 REDOC_SETTINGS = {'HIDE_HOSTNAME': False, 'EXPAND_RESPONSES': '200,201', 'PATH_IN_MIDDLE': True}
+
+# Push (Firebase Cloud Messaging). Off until both are set; see apps/notifications/push.py.
+FCM_PROJECT_ID = config('FCM_PROJECT_ID', default='')
+FCM_CREDENTIALS = config('FCM_CREDENTIALS', default='')
+FCM_CREDENTIALS_JSON = config('FCM_CREDENTIALS_JSON', default='')
+# Base for share links and their public preview pages.
+SHARE_BASE_URL = config('SHARE_BASE_URL', default='') or PUBLIC_BASE_URL

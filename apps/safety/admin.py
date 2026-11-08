@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import moderation
-from .models import Block, ModerationAction, Report
+from .models import Block, ModerationAction, Report, SupportMessage
 
 SEVERITY = {0: ('Unsafe', '#A8392C', '#F6E1DD'), 1: ('Under 21', '#7D6224', '#F3E8CC'), 2: ('Standard', '#4E5E2B', '#EEF2E2')}
 
@@ -201,3 +201,12 @@ class BlockAdmin(admin.ModelAdmin):
     list_display = ['created_at', 'blocker', 'blocked']
     search_fields = ['blocker__email', 'blocked__email']
     raw_id_fields = ['blocker', 'blocked']
+
+
+@admin.register(SupportMessage)
+class SupportMessageAdmin(admin.ModelAdmin):
+    list_display = ['created_at', 'topic', 'user', '__str__', 'handled']
+    list_filter = ['handled', 'topic']
+    list_editable = ['handled']
+    search_fields = ['user__email', 'text']
+    raw_id_fields = ['user']

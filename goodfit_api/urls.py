@@ -12,6 +12,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from apps.social import share
+
 from . import api_docs
 from .views import api_root, health
 
@@ -53,6 +55,17 @@ urlpatterns = [
     path('api/routes/', include('apps.routes.urls')),
     path('api/chats/', include('apps.chats.urls')),
     path('api/safety/', include('apps.safety.urls')),
+    path('api/notifications/', include('apps.notifications.urls')),
+    # Share sheet (Phase 6) and the public pages its links open.
+    path('api/share/recipients/', share.RecipientsView.as_view(), name='share-recipients'),
+    path('api/share/send/', share.SendView.as_view(), name='share-send'),
+    path('api/share/<str:kind>/<int:pk>/', share.ShareCardView.as_view(), name='share-card'),
+    path('u/<int:pk>', share.public_profile, name='public-profile'),
+    path('c/<int:pk>', share.public_club, name='public-club'),
+    path('join/<str:code>', share.public_invite, name='public-invite'),
+    path('e/<int:pk>', share.public_event, name='public-event'),
+    path('a/<int:pk>', share.public_activity, name='public-activity'),
+    path('r/<int:pk>', share.public_route, name='public-route'),
 ]
 
 # Serve media files in development

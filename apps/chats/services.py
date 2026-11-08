@@ -111,7 +111,7 @@ def check_slow_mode(m, now=None):
 
 
 def send(chat, user, body='', attachment='', route=None, photo=None, lat=None, lng=None, live_minutes=None,
-         client_id=''):
+         client_id='', share=None):
     if chat.is_closed:
         raise ChatClosed()
     m = member(chat, user)
@@ -127,12 +127,29 @@ def send(chat, user, body='', attachment='', route=None, photo=None, lat=None, l
         with transaction.atomic():
             msg = ChatMessage.objects.create(chat=chat, sender=user, body=body, attachment=attachment, route=route,
                                              photo=photo, latitude=lat, longitude=lng, live_until=live_until,
-                                             client_id=client_id or '')
+                                             client_id=client_id or '', share=share)
     except IntegrityError:
         return ChatMessage.objects.get(sender=user, client_id=client_id)
     Chat.objects.filter(pk=chat.pk).update(last_message_at=msg.created_at)
     ChatMember.objects.filter(pk=m.pk).update(last_read_id=msg.id)
+    _push_message(chat, msg, user)
     return msg
+
+
+def _push_message(chat, msg, sender):
+    """Push to everyone else in the chat (if they allow message pushes)."""
+    from apps.notifications import push
+    if not push.enabled():
+        return
+    from apps.notifications.services import push_only
+    from apps.safety.visibility import is_blocked
+    preview = msg.body or {'route': 'Shared a route', 'photo': 'Sent a photo', 'location': 'Shared a location',
+                           'share': 'Shared a link'}.get(msg.attachment, 'New message')
+    first = sender.first_name or (sender.display_name or 'Someone').split(' ')[0]
+    for cm in ChatMember.objects.filter(chat=chat).exclude(user=sender).select_related('user'):
+        if is_blocked(cm.user, sender.id):
+            continue
+        push_only(cm.user, 'message', chat_title(chat, cm.user), f'{first}: {preview}'[:180], link=f'/chat/{chat.id}')
 
 
 # ----------------------------------------------------------------- shapes
@@ -157,6 +174,8 @@ def message_item(msg, viewer, badges, request=None):
         r = route_card(msg.route, viewer, request, line_points=80)
         item['route'] = {k: r[k] for k in ('id', 'name', 'distance', 'elevation_gain', 'line', 'club_favorite',
                                            'is_loop', 'best_for')}
+    if msg.attachment == 'share' and msg.share:
+        item['share'] = msg.share
     if msg.attachment == 'photo' and msg.photo:
         item['photo'] = request.build_absolute_uri(msg.photo.url) if request else msg.photo.url
     if msg.attachment == 'location':
@@ -191,8 +210,8 @@ def inbox_row(chat, user, request=None):
     if chat.kind == 'ride' and chat.is_closed:
         preview = 'This chat closed 48 hours after the event.'
     elif last:
-        what = last.body or {'route': 'Shared a route', 'photo': 'Sent a photo',
-                             'location': 'Shared a location'}.get(last.attachment, '')
+        what = last.body or {'route': 'Shared a route', 'photo': 'Sent a photo', 'location': 'Shared a location',
+                             'share': 'Shared a link'}.get(last.attachment, '')
         who = 'You' if last.sender_id == user.id else (person(last.sender, request)['first_name'] if last.sender else '')
         preview = f'{who}: {what}' if chat.kind == 'ride' else (f'You: {what}' if last.sender_id == user.id else what)
     row = {

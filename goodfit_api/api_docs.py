@@ -45,7 +45,9 @@ TAG_RULES = [
     (r'^/api/social/(home|feed|checklist|crew)/', 'Home & feed'),
     (r'^/api/social/(posts|comments|[^/]+/\{id\}/(comments|props))', 'Posts, comments & props'),
     (r'^/api/social/\{kind\}/', 'Posts, comments & props'),
-    (r'^/api/social/people/', 'People'),
+    (r'^/api/social/(people|me/profile)/', 'People & profiles'),
+    (r'^/api/notifications/', 'Notifications'),
+    (r'^/api/share/', 'Sharing'),
     (r'^/api/activities/(live|summaries)/', 'Legacy · live tracking'),
     (r'^/api/activities/', 'Activities'),
     (r'^/api/routes/', 'Routes'),
@@ -63,13 +65,20 @@ TAG_RULES = [
 TAGS = [
     ('Status', 'Is the API up?'),
     ('Sign-in & accounts', 'Email, Apple and Google sign-in, sign-up with the 21+ age check, tokens and passwords.'),
-    ('Profile & settings', 'Your profile, onboarding answers, preferences and goals.'),
+    ('Profile & settings', 'Edit profile, Settings (privacy zones, who sees your activities, A Good Match, '
+                           'notifications), email and password, download your data, delete your account.'),
     ('Home & feed', 'The Home screen in one call, the feed, and the new-member checklist.'),
     ('Activities', 'Record and save a ride, run or class; activity details, photos and stats. '
                    'Saving is idempotent on `client_id`, so a retried upload never duplicates.'),
     ('Routes', 'Draw a route (snapped to roads and paths, with elevation), browse and save routes.'),
     ('Posts, comments & props', 'Posts with audience controls, comments, and props (kudos) on posts and activities.'),
-    ('People', 'Follow and wave.'),
+    ('People & profiles', 'Your You page, other members’ profiles (as you’re allowed to see them), followers, '
+                          'following, follow and wave.'),
+    ('Notifications', 'Props (grouped), comments, follows, ride invites and changes, day-before reminders, club '
+                      'announcements and report updates. Each category can be turned off. Register a phone for push '
+                      'with /devices/.'),
+    ('Sharing', 'The share sheet: the card, the public-link switch for activities, people and ride chats to Send to. '
+                'Links open public preview pages at /u/, /c/, /e/, /a/ and /r/.'),
     ('Clubs & community', 'The Community hub, club pages, members and leaderboards.'),
     ('Events & rides', 'Browse rides by day, RSVP, and host a community ride (Plus) or suggest one to a club.'),
     ('Fit Buddies', 'People nearby who move like you. Locations are rounded to about 1 km.'),
@@ -237,6 +246,38 @@ BODIES = {
         {'target_kind': 'post', 'target_id': 42, 'reason': 'spam', 'block': False}), ()),
     ('post', '/api/safety/hide/{kind}/{id}/'): ('Hide a post or activity, or someone from suggestions', None, ()),
     ('post', '/api/safety/blocks/{id}/'): ('Block', None, ()),
+    ('post', '/api/safety/contact/'): ('Contact the team', obj({
+        'topic': s(enum=['question', 'safety', 'feedback']), 'text': s()}, ['topic', 'text']), ()),
+
+    ('patch', '/api/auth/me/'): ('Edit profile', obj({
+        'name': s(), 'neighborhood': s(), 'headline': s(), 'bio': s('Up to 150 characters'),
+        'interests': arr(s(enum=['cycling', 'running', 'walking', 'yoga', 'strength', 'pilates', 'hiit',
+                                 'swimming', 'hiking', 'crossfit']), '1 to 3'),
+        'intents': arr(s(enum=['community', 'fitness', 'romantic'])), 'units': s(enum=['mi', 'km'])}), ()),
+    ('patch', '/api/auth/settings/'): ('Change settings', obj({
+        'privacy_zones_on': b(), 'hide_track_ends': b(), 'default_visibility': VISIBILITY,
+        'match_visible': b('Show me in A Good Match'), 'match_paused': b('Pause new matches'),
+        'notifications': obj({'ride_reminders': b(), 'props_comments': b(), 'club_announcements': b(),
+                              'messages': b()})}), ()),
+    ('post', '/api/auth/email/'): ('Change email', obj({'email': s(format='email'),
+                                                        'password': s(format='password')}, ['email']), ()),
+    ('post', '/api/auth/password/'): ('Set or change password', obj({
+        'old_password': s('Not needed for Apple/Google accounts adding one', format='password'),
+        'new_password': s(format='password')}, ['new_password']), ()),
+    ('post', '/api/auth/delete/'): ('Delete account', obj({
+        'password': s(format='password'), 'confirm': s('"DELETE" for Apple/Google accounts')}), ()),
+    ('patch', '/api/notifications/settings/'): ('Turn notification categories on or off', obj({
+        'ride_reminders': b(), 'props_comments': b(), 'club_announcements': b(), 'messages': b()}), ()),
+    ('post', '/api/notifications/devices/'): ('Register this phone for push', obj({
+        'token': s('FCM registration token'), 'platform': s(enum=['ios', 'android'])}, ['token', 'platform']), ()),
+    ('post', '/api/notifications/read-all/'): ('Mark all read', None, ()),
+    ('post', '/api/notifications/{id}/read/'): ('Mark one read', None, ()),
+    ('patch', '/api/share/{kind}/{id}/'): ('Anyone with the link (activities)', obj({'public': b()}, ['public']), ()),
+    ('post', '/api/share/send/'): ('Send in A Good Fit', obj({
+        'kind': s(enum=['profile', 'club', 'club_invite', 'event', 'activity', 'route']), 'id': i(),
+        'users': arr(i(), 'Member ids (direct messages)'),
+        'chats': arr(i(), 'Ride chat ids (rides, routes and activities only)'), 'note': s()},
+        ['kind', 'id']), ()),
 }
 
 

@@ -77,4 +77,17 @@ def decide(report, decision, moderator, note=''):
 
     for r in reports:
         r.resolve(outcome, text, moderator)
+    _tell(reports, decision, member, noun)
     return len(reports)
+
+
+def _tell(reports, decision, member, noun):
+    """Reporters hear their report was reviewed; a warned member hears why."""
+    from apps.notifications.services import B, T, notify
+    for r in reports:
+        notify(r.reporter, 'report_update', [B('We reviewed your report'),
+                                             T(' and have an update for you in Your reports.')], link='/reports')
+    if member and decision in ('remove_warn', 'warn'):
+        what = f'A {noun} of yours was removed' if decision == 'remove_warn' else 'A reminder about our guidelines'
+        notify(member, 'warning', [B(what), T('. Repeat issues lead to removal. Read how we move together.')],
+               link='/guidelines')

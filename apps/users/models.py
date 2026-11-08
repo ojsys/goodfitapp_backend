@@ -69,7 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     INTENTS = ('community', 'fitness', 'romantic')
     INTERESTS = (
         'running', 'cycling', 'strength', 'yoga', 'hiking',
-        'pilates', 'hiit', 'crossfit',
+        'pilates', 'hiit', 'crossfit', 'walking', 'swimming',
     )
     MAX_INTERESTS = 3
     # What the member is here for. 'romantic' turns on A Good Match.
@@ -93,6 +93,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Privacy and Safety: hide the start and end of every track from others,
     # even with no saved place. On by default (requirements: Location).
     hide_track_ends = models.BooleanField(default=True)
+    # Settings (Phase 6). Privacy zones only trim maps while this is on.
+    privacy_zones_on = models.BooleanField(default=True)
+    # Who sees new activities unless chosen on the Save screen.
+    default_visibility = models.CharField(max_length=10, default='followers')
+    # A Good Match: keep the chats, stop new matches (Phase 8 uses it).
+    match_paused = models.BooleanField(default=False)
 
     # Fit Buddies distance ("2.4 mi away"). Rounded to 2 decimals (about
     # 1 km) before it's stored, so no address or routine can be read from it.

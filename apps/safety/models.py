@@ -141,3 +141,21 @@ class ModerationAction(models.Model):
 
     def __str__(self):
         return f'{self.get_kind_display()}: {self.member}'
+
+
+class SupportMessage(models.Model):
+    """"Contact the Good Co. team" on the Community Guidelines page."""
+
+    TOPICS = [('question', 'Ask a question'), ('safety', 'Report a safety concern'), ('feedback', 'Share feedback')]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='support_messages')
+    topic = models.CharField(max_length=10, choices=TOPICS)
+    text = models.TextField(max_length=2000)
+    handled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'support_messages'
+        ordering = ['handled', '-created_at']
+
+    def __str__(self):
+        return f'{self.get_topic_display()}: {self.text[:60]}'

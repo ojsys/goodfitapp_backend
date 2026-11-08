@@ -274,3 +274,25 @@ class HideView(APIView):
             return _bad('kind', 'Unknown kind.')
         unhide(request.user, kind, pk)
         return Response({'hidden': False})
+
+
+class ContactView(APIView):
+    """Contact the team. Safety concerns go to the moderation team first."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_scope = 'reports'
+
+    def get_throttles(self):
+        from rest_framework.throttling import ScopedRateThrottle
+        return [ScopedRateThrottle()]
+
+    def post(self, request):
+        from .models import SupportMessage
+        topic = request.data.get('topic')
+        text = (request.data.get('text') or '').strip()
+        if topic not in dict(SupportMessage.TOPICS):
+            return _bad('topic', 'Pick what it’s about.')
+        if not text:
+            return _bad('text', 'Write your message first.')
+        SupportMessage.objects.create(user=request.user, topic=topic, text=text[:2000])
+        return Response({'sent': True}, status=status.HTTP_201_CREATED)

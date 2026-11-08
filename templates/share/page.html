@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} · A Good Fit</title>
+<meta name="description" content="{% if subtitle %}{{ subtitle }}{% else %}{{ eyebrow }}{% endif %}">
+<meta property="og:site_name" content="A Good Fit">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{% for k, v in facts %}{{ k }} {{ v }}{% if not forloop.last %} · {% endif %}{% endfor %}{% if not facts %}{{ subtitle|default:eyebrow }}{% endif %}">
+<meta property="og:url" content="{{ url }}">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+{% if private %}<meta name="robots" content="noindex">{% endif %}
+<meta name="theme-color" content="#F4EFE7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%236B7F3C'/%3E%3Ccircle cx='16' cy='16' r='5.5' fill='%23F4EFE7'/%3E%3C/svg%3E">
+{% include "docs/_brand.html" %}
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: var(--sans); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  main { max-width: 560px; margin: 0 auto; padding: 32px 18px 56px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
+  .head { display: flex; gap: 14px; align-items: center; padding: 22px 22px 18px; }
+  .thumb { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; color: #fff;
+    font: 700 22px/1 var(--sans); flex: none; background: var(--olive); overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .eyebrow { font: 700 12px/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--clay); }
+  h1 { font: 700 30px/1.1 var(--display); letter-spacing: -.02em; margin: 6px 0 0; }
+  .sub { color: var(--ink-muted); margin: 6px 0 0; font-size: 15px; }
+  .map { background: #EEE9DE; border-top: 1px solid var(--line-soft); }
+  .map svg { display: block; width: 100%; height: auto; }
+  dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px 18px; margin: 0;
+    padding: 18px 22px 22px; border-top: 1px solid var(--line-soft); }
+  dt { font-size: 12.5px; font-weight: 600; color: var(--ink-muted); }
+  dd { margin: 3px 0 0; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 20px; }
+  .chips span { background: var(--green-tint); color: var(--olive-deep); border-radius: 99px; padding: 6px 12px;
+    font-size: 13.5px; font-weight: 600; }
+  .body { padding: 0 22px 22px; color: var(--ink); font-size: 15px; }
+  .private { padding: 26px 22px; color: var(--ink-muted); font-size: 15.5px; }
+  .cta { margin-top: 18px; background: var(--olive-tint); border-radius: 18px; padding: 18px 20px;
+    display: flex; gap: 12px; align-items: center; }
+  .cta .dot { width: 36px; height: 36px; border-radius: 50%; background: var(--olive); display: grid; place-items: center; flex: none; }
+  .cta .dot i { width: 12px; height: 12px; border-radius: 50%; background: var(--cream); display: block; }
+  .cta p { margin: 0; font-weight: 700; color: var(--olive-deep); }
+  .cta small { display: block; font-weight: 500; color: var(--ink-muted); margin-top: 2px; }
+  footer { text-align: center; color: var(--ink-muted); font-size: 13px; margin-top: 26px; }
+</style>
+</head>
+<body>
+<main>
+  <article class="card">
+    <div class="head">
+      <div class="thumb" style="{% if color %}background:{{ color }}{% endif %}">
+        {% if photo %}<img src="{{ photo }}" alt="">{% else %}{{ initials|default:"AG" }}{% endif %}
+      </div>
+      <div>
+        <div class="eyebrow">{{ eyebrow }}</div>
+        <h1>{{ title }}</h1>
+        {% if subtitle %}<p class="sub">{{ subtitle }}</p>{% endif %}
+      </div>
+    </div>
+    {% if private %}
+      <p class="private">{{ body }}</p>
+    {% else %}
+      {% if svg %}
+      <div class="map" aria-label="Route map">
+        <svg viewBox="0 0 320 200" role="img" aria-label="Route">
+          <polyline points="{{ svg }}" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="{{ svg }}" fill="none" stroke="#C84B3C" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      {% endif %}
+      {% if facts %}<dl>{% for k, v in facts %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}</dl>{% endif %}
+      {% if chips %}<div class="chips">{% for c in chips %}<span>{{ c }}</span>{% endfor %}</div>{% endif %}
+      {% if body %}<p class="body">{{ body }}</p>{% endif %}
+    {% endif %}
+  </article>
+  <div class="cta">
+    <span class="dot" aria-hidden="true"><i></i></span>
+    <p>{% if cta %}{{ cta }}{% else %}Open it in the A Good Fit app.{% endif %}
+      <small>A Good Fit is the community wellness app from GoodCo Bike Club.</small></p>
+  </div>
+  <footer>A Good Fit · Brooklyn</footer>
+</main>
+</body>
+</html>

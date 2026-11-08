@@ -71,6 +71,9 @@ class Activity(models.Model):
         max_length=20, choices=VISIBILITY_CHOICES, default='followers',
         help_text='Who can see this activity',
     )
+    # Share sheet: "Anyone with the link" opens the public page even if
+    # visibility is followers or club.
+    link_public = models.BooleanField(default=False)
     # For 'club' visibility: which club's members can see it.
     club = models.ForeignKey(
         'social.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='activities',

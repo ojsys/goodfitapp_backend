@@ -66,7 +66,7 @@ class ChatMember(models.Model):
 
 
 class ChatMessage(models.Model):
-    ATTACHMENTS = [('', 'None'), ('route', 'Route'), ('photo', 'Photo'), ('location', 'Location')]
+    ATTACHMENTS = [('', 'None'), ('route', 'Route'), ('photo', 'Photo'), ('location', 'Location'), ('share', 'Shared link')]
     MAX_BODY = 2000
 
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
@@ -81,6 +81,8 @@ class ChatMessage(models.Model):
     live_until = models.DateTimeField(null=True, blank=True)
     # The app's id for the message, so a resend from the outbox isn't a duplicate.
     client_id = models.CharField(max_length=40, blank=True)
+    # A shared activity, ride, club, route or profile (share sheet → Send).
+    share = models.JSONField(null=True, blank=True)
     removed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     removed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

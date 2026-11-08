@@ -153,7 +153,7 @@ class RecordView(APIView):
         if d.get('elevation_gain') is not None and not pts:
             gain = float(d['elevation_gain'])
 
-        visibility = d.get('visibility', 'followers')
+        visibility = d.get('visibility') or request.user.default_visibility or 'followers'
         if visibility not in dict(Activity.VISIBILITY_CHOICES):
             return _bad('invalid_visibility', 'Pick who can see this.')
         club = None

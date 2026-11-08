@@ -101,6 +101,22 @@ dependent settings are rewritten; secrets and data stay as they are.
   emails are written to the log instead of sent.
 - `BIRTHDAY_ENCRYPTION_KEY`: **never change it** once members have signed up.
 
+## Turning on push notifications
+
+1. In the [Firebase console](https://console.firebase.google.com), create a project and add the iOS app
+   (bundle ID) and the Android app (package name). Upload your APNs key (Apple Developer → Keys) under
+   Project settings → Cloud Messaging.
+2. Project settings → Service accounts → Generate new private key. That downloads a JSON file.
+3. `./deploy/deploy.sh env` and add:
+   ```
+   FCM_PROJECT_ID=your-project-id
+   FCM_CREDENTIALS_JSON={"type":"service_account", ... the whole file on one line ...}
+   ```
+4. Put `GoogleService-Info.plist` (iOS) and `google-services.json` (Android) into the app, as the app's
+   README describes, and rebuild it.
+
+Until then the app's Notifications screen works as usual; only the phone alerts are off.
+
 ## Moving data from the old cPanel server
 
 1. In cPanel, *phpPgAdmin → Export* (or `pg_dump --no-owner --no-acl`) to get a `.sql` file.
