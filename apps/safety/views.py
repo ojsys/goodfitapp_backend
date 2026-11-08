@@ -38,6 +38,8 @@ def block(blocker, blocked):
     Follow.objects.filter(Q(follower=blocker, followee=blocked) | Q(follower=blocked, followee=blocker)).delete()
     Wave.objects.filter(Q(sender=blocker, recipient=blocked) | Q(sender=blocked, recipient=blocker)).delete()
     RideInvite.objects.filter(Q(sender=blocker, recipient=blocked) | Q(sender=blocked, recipient=blocker)).delete()
+    from apps.goodmatch.services import end_for_block
+    end_for_block(blocker, blocked)
     visibility.forget(blocker)
 
 
@@ -57,6 +59,23 @@ def unhide(member, kind, obj_id):
 
 # ----------------------------------------------------------------- targets
 
+MATCH_CONTEXTS = {'match_profile': 'A Good Match profile', 'match_chat': 'Your match in A Good Match'}
+
+
+def _match_snapshot(reporter, u):
+    """A Good Match report: their match prompts and the last messages between them."""
+    from apps.chats.models import ChatMessage
+    from apps.goodmatch.models import Match, MatchProfile
+    p = MatchProfile.objects.filter(user=u).first()
+    lines = [f'Prompt: {x.get("q")} / {x.get("a")}' for x in (p.prompts if p else [])]
+    m = Match.involving(reporter).filter(Q(a=u) | Q(b=u)).exclude(chat=None).order_by('-id').first()
+    if m:
+        msgs = list(ChatMessage.objects.filter(chat_id=m.chat_id).select_related('sender').order_by('-id')[:6])[::-1]
+        lines += [f'  {_name(x.sender)} ({x.created_at:%Y-%m-%d %H:%M} UTC): {x.body or "[" + x.attachment + "]"}'
+                  for x in msgs]
+    return '\n'.join(lines)
+
+
 def _resolve_target(kind, target_id, reporter, context):
     """(target_user, context label, snapshot) for a report, or raise 404.
     Only things the reporter can actually see can be reported."""
@@ -69,6 +88,9 @@ def _resolve_target(kind, target_id, reporter, context):
             f'Prompt: {u.prompt_question} / {u.prompt_answer}' if getattr(u, 'prompt_answer', '') else '',
             f'Photo: {u.avatar.url}' if getattr(u, 'avatar', None) else '',
         ] if x and not x.endswith(': '))
+        if context in MATCH_CONTEXTS:
+            snap = '\n'.join(x for x in [snap, _match_snapshot(reporter, u)] if x)
+            return u, MATCH_CONTEXTS[context], snap
         return u, (context or 'Profile'), snap
     if kind == 'message':
         from apps.chats.models import ChatMember, ChatMessage

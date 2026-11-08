@@ -212,6 +212,21 @@ def export(user):
         'blocked': list(Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)),
         'reports_made': rows(Report.objects.filter(reporter=user), 'target_kind', 'reason', 'status',
                              'created_at'),
+        'a_good_match': _match_export(user),
+    }
+
+
+def _match_export(user):
+    from apps.goodmatch.models import Decision, Match, MatchProfile
+    p = MatchProfile.objects.filter(user=user).first()
+    return {
+        'profile': ({'gender': p.gender, 'show_me': p.show_me, 'age_min': p.age_min, 'age_max': p.age_max,
+                     'max_miles': p.max_miles, 'prompts': p.prompts, 'pace_note': p.pace_note} if p else None),
+        'likes_and_passes': [{'action': d.action, 'at': d.created_at.isoformat()}
+                             for d in Decision.objects.filter(actor=user)],
+        'matches': [{'state': m.state, 'matched_at': m.locked_at.isoformat(),
+                     'ended_at': m.ended_at.isoformat() if m.ended_at else None}
+                    for m in Match.involving(user)],
     }
 
 

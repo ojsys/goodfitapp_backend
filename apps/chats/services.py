@@ -27,6 +27,10 @@ class ChatClosed(Exception):
 
 # ------------------------------------------------------------- membership
 
+ATTACHMENT_PREVIEW = {'route': 'Shared a route', 'photo': 'Sent a photo', 'location': 'Shared a location',
+                      'share': 'Shared a link', 'meetup': 'Suggested a first meetup'}
+
+
 def ride_chat(event, create=True):
     chat = Chat.objects.filter(event=event).first()
     if chat is None and create:
@@ -143,8 +147,7 @@ def _push_message(chat, msg, sender):
         return
     from apps.notifications.services import push_only
     from apps.safety.visibility import is_blocked
-    preview = msg.body or {'route': 'Shared a route', 'photo': 'Sent a photo', 'location': 'Shared a location',
-                           'share': 'Shared a link'}.get(msg.attachment, 'New message')
+    preview = msg.body or ATTACHMENT_PREVIEW.get(msg.attachment, 'New message')
     first = sender.first_name or (sender.display_name or 'Someone').split(' ')[0]
     for cm in ChatMember.objects.filter(chat=chat).exclude(user=sender).select_related('user'):
         if is_blocked(cm.user, sender.id):
@@ -174,7 +177,7 @@ def message_item(msg, viewer, badges, request=None):
         r = route_card(msg.route, viewer, request, line_points=80)
         item['route'] = {k: r[k] for k in ('id', 'name', 'distance', 'elevation_gain', 'line', 'club_favorite',
                                            'is_loop', 'best_for')}
-    if msg.attachment == 'share' and msg.share:
+    if msg.attachment in ('share', 'meetup', 'prompt') and msg.share:
         item['share'] = msg.share
     if msg.attachment == 'photo' and msg.photo:
         item['photo'] = request.build_absolute_uri(msg.photo.url) if request else msg.photo.url
@@ -210,8 +213,7 @@ def inbox_row(chat, user, request=None):
     if chat.kind == 'ride' and chat.is_closed:
         preview = 'This chat closed 48 hours after the event.'
     elif last:
-        what = last.body or {'route': 'Shared a route', 'photo': 'Sent a photo', 'location': 'Shared a location',
-                             'share': 'Shared a link'}.get(last.attachment, '')
+        what = last.body or ATTACHMENT_PREVIEW.get(last.attachment, '')
         who = 'You' if last.sender_id == user.id else (person(last.sender, request)['first_name'] if last.sender else '')
         preview = f'{who}: {what}' if chat.kind == 'ride' else (f'You: {what}' if last.sender_id == user.id else what)
     row = {
@@ -229,6 +231,9 @@ def inbox_row(chat, user, request=None):
     else:
         other = other_in_direct(chat, user)
         row['person'] = person(other, request) if other else None
+        if chat.kind == 'match' and other:
+            from apps.goodmatch.services import age_of
+            row['age'] = age_of(other)
     return row
 
 
@@ -258,6 +263,18 @@ def chat_header(chat, user, request=None):
             'when': f"{card['time']} · {ev.location_name}" if ev.location_name else card['time'],
             'my_activity': _my_activity_for(ev, user, tz),
         })
+    elif chat.kind == 'match':
+        from apps.goodmatch import services as gm
+        other = other_in_direct(chat, user)
+        m = getattr(chat, 'match', None)
+        head.update({'person': person(other, request) if other else None,
+                     'age': gm.age_of(other) if other else None,
+                     'subtitle': ' · '.join(x for x in [gm._matched_label(m, user) if m else '',
+                                                        other.neighborhood if other else ''] if x),
+                     'match_id': m.id if m else None,
+                     'on_hold': not gm.chat_open(chat) and not chat.is_closed,
+                     'quick_replies': gm.quick_replies(m, user) if m else [],
+                     'private': True})
     else:
         other = other_in_direct(chat, user)
         head.update({'person': person(other, request) if other else None,
@@ -283,7 +300,11 @@ def chats_for(user):
     qs = (Chat.objects.filter(members__user=user)
           .select_related('event', 'event__club').prefetch_related('members__user').distinct())
     out = []
+    romance = user.match_opted_in
     for c in qs:
+        # Match chats: only while Romantic is on, and gone once someone moved on.
+        if c.kind == 'match' and (not romance or c.is_closed):
+            continue
         if c.kind == 'direct':
             other = other_in_direct(c, user)
             if other is None or other.id in blocked:

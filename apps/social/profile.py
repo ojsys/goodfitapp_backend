@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.activities.models import Activity
+from apps.goodmatch.services import new_today
 from apps.safety.visibility import blocked_ids, is_blocked
 from apps.users.age_gate import safe_zone
 from apps.users.models import User
@@ -109,7 +110,7 @@ class MyProfileView(APIView):
             'saved_routes': RouteSave.objects.filter(user=u).count(),
             'challenge': _top_challenge(u, request),
             'trophies': _trophies(u),
-            'match': {'show': u.match_opted_in, 'new_today': 0},
+            'match': {'show': u.match_opted_in, 'new_today': new_today(u) if u.match_opted_in else 0},
             'recent': [activity_item(a, u, request, preview=False) for a in recent],
             'share_url': share_url(f'/u/{u.id}'),
         })

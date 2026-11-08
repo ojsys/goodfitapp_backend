@@ -41,7 +41,8 @@ class Block(models.Model):
 
 # Reasons per kind of target (Core-Feed / Fit Buddies / chat report sheets).
 REASONS = {
-    'member': ['fake', 'under21', 'harassment', 'unsafe', 'other'],
+    # A match chat reports the person with the chat's reasons (spam, inappropriate).
+    'member': ['fake', 'under21', 'harassment', 'unsafe', 'spam', 'inappropriate', 'other'],
     'post': ['spam', 'harassment', 'unsafe', 'inappropriate', 'other'],
     'activity': ['spam', 'harassment', 'unsafe', 'inappropriate', 'other'],
     'comment': ['spam', 'harassment', 'unsafe', 'inappropriate', 'other'],

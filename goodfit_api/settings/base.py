@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'apps.safety',
     'apps.notifications',
     'apps.performance',
+    'apps.goodmatch',
 ]
 
 MIDDLEWARE = [

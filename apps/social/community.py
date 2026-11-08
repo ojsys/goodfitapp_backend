@@ -198,7 +198,9 @@ def hub(user, request=None):
     clubs = [club_summary(m.club, user, request)
              for m in ClubMembership.objects.filter(user=user).select_related('club').order_by('joined_at')]
     rows = [chat_svc.inbox_row(c, user, request) for c in chat_svc.chats_for(user)]
-    rows = sorted([r for r in rows if not r['closed']], key=lambda r: r['at'], reverse=True)[:2]
+    # Match chats stay inside A Good Match.
+    rows = sorted([r for r in rows if not r['closed'] and r['kind'] != 'match'], key=lambda r: r['at'],
+                  reverse=True)[:2]
     messages = []
     for r in rows:
         if r['kind'] == 'ride':

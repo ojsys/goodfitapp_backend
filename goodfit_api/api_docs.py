@@ -59,7 +59,8 @@ TAG_RULES = [
     (r'^/api/social/privacy-zones/', 'Privacy'),
     (r'^/api/chats/', 'Chats'),
     (r'^/api/safety/', 'Safety'),
-    (r'^/api/matching/', 'A Good Match (early)'),
+    (r'^/api/match/', 'A Good Match'),
+    (r'^/api/matching/', 'Legacy · matching'),
     (r'^/api/messaging/', 'Legacy · messaging'),
 ]
 
@@ -91,9 +92,13 @@ TAGS = [
               'Poll `GET /messages/?after=<id>` for new ones. Slow mode answers `429` with `locked_until`.'),
     ('Safety', 'Report a person, post, activity, comment or message; block (two-way, everywhere); hide with Undo; '
                'Your reports. Unsafe reports are reviewed first, then under 21.'),
-    ('A Good Match (early)', 'The opt-in dating space. Being rebuilt; expect changes.'),
+    ('A Good Match', 'The opt-in dating space, for members with the Romantic intent only. One profile at a time, '
+                     'five a day. A like that is liked back locks the match until the two meet up or one moves on; '
+                     'moving on closes the private match chat and pauses new matches until 9:00 AM the next day. '
+                     'Match chats are in Chats (kind `match`), text only and never shareable.'),
     ('Legacy · live tracking', 'Older server-side tracking. New clients record on the phone and save with `POST /api/activities/record/`.'),
     ('Legacy · messaging', 'Older 1:1 conversations, kept for old app versions. Use Chats.'),
+    ('Legacy · matching', 'The original fitness-buddy swipes, kept for old app versions. Use A Good Match.'),
 ]
 
 
@@ -280,6 +285,15 @@ BODIES = {
         'type': s(enum=['ride', 'run']),
         'track': arr(obj({'lat': n(), 'lng': n(), 'alt': n(), 't': i('epoch ms'), 'seg': i()}))}, ['type', 'track']), ()),
     ('post', '/api/performance/challenges/{id}/join/'): ('Join a challenge', None, ()),
+    ('post', '/api/match/decide/'): ('Like or pass on the profile shown', obj({
+        'user': i('Whose profile'), 'action': s(enum=['like', 'pass']),
+        'prompt': s('Replying to this prompt (optional)'), 'note': s('Your reply (optional)')},
+        ['user', 'action']), ()),
+    ('patch', '/api/match/profile/'): ('Your match profile and who to show', obj({
+        'gender': s(enum=['woman', 'man', 'nonbinary']), 'show_me': s(enum=['women', 'men', 'everyone']),
+        'age_min': i('21 or more'), 'age_max': i(), 'max_miles': i(),
+        'prompts': arr(obj({'q': s('One of prompt_options'), 'a': s()})), 'pace_note': s('"Easy, chatty"')}), ()),
+    ('post', '/api/match/{id}/suggest/'): ('Suggest a first meetup', obj({'event': i('Event id (default: the idea shown)')}), ()),
     ('patch', '/api/share/{kind}/{id}/'): ('Anyone with the link (activities)', obj({'public': b()}, ['public']), ()),
     ('post', '/api/share/send/'): ('Send in A Good Fit', obj({
         'kind': s(enum=['profile', 'club', 'club_invite', 'event', 'activity', 'route']), 'id': i(),

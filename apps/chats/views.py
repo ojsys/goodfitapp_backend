@@ -1,7 +1,7 @@
 """
 Chats API (Phase 4).
 
-GET  /api/chats/                       inbox: ride chats, direct, (match: Phase 8)
+GET  /api/chats/                       inbox: ride chats, direct, A Good Match
 GET  /api/chats/unread/                total unread (Home header)
 POST /api/chats/direct/ {user}         open (or start) a DM
 GET  /api/chats/<id>/                  header
@@ -40,6 +40,8 @@ def _chat_for(user, pk):
     chat = get_object_or_404(Chat.objects.select_related('event', 'event__club'), pk=pk)
     if not ChatMember.objects.filter(chat=chat, user=user).exists():
         return None
+    if chat.kind == 'match' and not user.match_opted_in:
+        return None
     return chat
 
 
@@ -51,7 +53,8 @@ class InboxView(APIView):
         rows.sort(key=lambda r: (r['closed'], r['at']), reverse=False)
         ride = sorted([r for r in rows if r['kind'] == 'ride'], key=lambda r: (r['closed'], -_ts(r['at'])))
         direct = sorted([r for r in rows if r['kind'] == 'direct'], key=lambda r: -_ts(r['at']))
-        return Response({'ride': ride, 'direct': direct, 'match': [],
+        match = sorted([r for r in rows if r['kind'] == 'match'], key=lambda r: -_ts(r['at']))
+        return Response({'ride': ride, 'direct': direct, 'match': match,
                          'unread': sum(r['unread'] for r in rows)})
 
 
@@ -157,6 +160,12 @@ class MessagesView(APIView):
             other = svc.other_in_direct(chat, request.user)
             if not other or not svc.direct_allowed(request.user, other):
                 return _bad('blocked', 'You can’t message this person.', status.HTTP_403_FORBIDDEN)
+        if chat.kind == 'match':
+            from apps.goodmatch.services import chat_open
+            if att not in ('',):
+                return _bad('attachment', 'Match chats are text only.')
+            if not chat.is_closed and not chat_open(chat):
+                return _bad('on_hold', 'This chat is on hold.', status.HTTP_409_CONFLICT)
         try:
             msg = svc.send(chat, request.user, body=body, attachment=att, route=route, photo=photo, lat=lat, lng=lng,
                            live_minutes=live, client_id=(d.get('client_id') or '')[:40])
