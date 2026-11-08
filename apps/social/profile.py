@@ -75,6 +75,21 @@ def share_url(path):
     return f'{settings.SHARE_BASE_URL.rstrip("/")}{path}'
 
 
+def _top_challenge(user, request):
+    from apps.performance import challenges
+    data = challenges.page(user, request)
+    joined = ([data['featured']] if data['featured'] and data['featured']['joined'] else []) + data['running']
+    return {**joined[0], 'more': len(joined) - 1} if joined else None
+
+
+def _trophies(user):
+    from apps.performance.models import Trophy
+    tz = safe_zone(user.timezone)
+    return {'count': Trophy.objects.filter(user=user).count(),
+            'items': [{'label': t.label, 'month': timezone.localtime(t.earned_at, tz).strftime('%b')}
+                      for t in Trophy.objects.filter(user=user)[:4]]}
+
+
 class MyProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -92,9 +107,8 @@ class MyProfileView(APIView):
             'season': season(mine, u),
             'training': training(u),
             'saved_routes': RouteSave.objects.filter(user=u).count(),
-            # Phase 7 (challenges, trophies) and Phase 8 (matches) fill these in.
-            'challenge': None,
-            'trophies': [],
+            'challenge': _top_challenge(u, request),
+            'trophies': _trophies(u),
             'match': {'show': u.match_opted_in, 'new_today': 0},
             'recent': [activity_item(a, u, request, preview=False) for a in recent],
             'share_url': share_url(f'/u/{u.id}'),

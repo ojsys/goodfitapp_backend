@@ -13,6 +13,7 @@ Track points: {"lat", "lng", "alt" (m, optional), "t" (epoch ms), "seg" (int)}.
 `seg` increases after each pause; distance and time never bridge two segments.
 """
 
+import uuid
 from datetime import datetime, timezone as dt_tz
 
 from django.db import IntegrityError, transaction
@@ -131,6 +132,10 @@ class RecordView(APIView):
             return _bad('invalid_type', 'Pick an activity type.')
         client_id = d.get('client_id')
         if client_id:
+            try:
+                client_id = str(uuid.UUID(str(client_id)))
+            except ValueError:
+                return _bad('invalid_client_id', 'client_id must be a UUID.')
             existing = Activity.objects.filter(user=user, client_id=client_id).first()
             if existing:
                 return Response(self._detail(existing, request), status=status.HTTP_200_OK)
@@ -194,6 +199,15 @@ class RecordView(APIView):
         except IntegrityError:
             act = Activity.objects.get(user=user, client_id=client_id)
             return Response(self._detail(act, request), status=status.HTTP_200_OK)
+        # Segments, best efforts and challenges. A problem here must never
+        # lose the upload, so it's logged and skipped.
+        try:
+            from apps.performance import challenges, segments
+            segments.record_efforts(act)
+            challenges.update_for(user)
+        except Exception:
+            import logging
+            logging.getLogger('apps.performance').exception('matching failed for activity %s', act.id)
         return Response(self._detail(act, request), status=status.HTTP_201_CREATED)
 
     @staticmethod
@@ -229,6 +243,8 @@ def detail(act, viewer, request=None):
         'splits': splits(pts, cum, alts, UNIT_M[unit]) if pts else [],
         'split_unit': unit,
     })
+    from apps.performance.segments import activity_segments
+    item['segments'] = activity_segments(act, viewer)
     return item
 
 

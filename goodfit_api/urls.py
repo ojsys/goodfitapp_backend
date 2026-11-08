@@ -56,6 +56,7 @@ urlpatterns = [
     path('api/chats/', include('apps.chats.urls')),
     path('api/safety/', include('apps.safety.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
+    path('api/performance/', include('apps.performance.urls')),
     # Share sheet (Phase 6) and the public pages its links open.
     path('api/share/recipients/', share.RecipientsView.as_view(), name='share-recipients'),
     path('api/share/send/', share.SendView.as_view(), name='share-send'),
@@ -66,6 +67,7 @@ urlpatterns = [
     path('e/<int:pk>', share.public_event, name='public-event'),
     path('a/<int:pk>', share.public_activity, name='public-activity'),
     path('r/<int:pk>', share.public_route, name='public-route'),
+    path('s/<int:pk>', share.public_segment, name='public-segment'),
 ]
 
 # Serve media files in development

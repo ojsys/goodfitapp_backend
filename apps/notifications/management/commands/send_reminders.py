@@ -37,4 +37,6 @@ class Command(BaseCommand):
                 if notify(r.user, 'ride_reminder', [B(e.title), T(f' is {t:%A} at {t:%-I:%M %p}.{tail}')],
                           link=f'/events/{e.id}', group_key=key, push_title='Tomorrow'):
                     sent += 1
-        self.stdout.write(f'{sent} reminder(s) sent')
+        from apps.performance.challenges import nudge_ending
+        nudges = nudge_ending()
+        self.stdout.write(f'{sent} reminder(s) sent, {nudges} challenge nudge(s)')

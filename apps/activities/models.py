@@ -74,6 +74,8 @@ class Activity(models.Model):
     # Share sheet: "Anyone with the link" opens the public page even if
     # visibility is followers or club.
     link_public = models.BooleanField(default=False)
+    # Fastest stretches over standard distances, e.g. {"10 mi": 1664} (seconds).
+    best_efforts = models.JSONField(default=dict, blank=True)
     # For 'club' visibility: which club's members can see it.
     club = models.ForeignKey(
         'social.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='activities',

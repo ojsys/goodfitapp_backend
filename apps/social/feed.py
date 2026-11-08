@@ -99,6 +99,7 @@ def activity_item(act, viewer, request=None, preview=True):
         'comments': act.n_comments if hasattr(act, 'n_comments') else act.comments.count(),
         'propped': bool(getattr(act, 'i_propped', False)),
         'photos': [request.build_absolute_uri(p.image.url) if request else p.image.url for p in act.photos.all()],
+        'segment_prs': act.segment_efforts.filter(is_pr=True, private=False).count(),
     }
     if preview:
         item['track'] = track_for(act, viewer, PREVIEW_POINTS) if act.is_gps else []

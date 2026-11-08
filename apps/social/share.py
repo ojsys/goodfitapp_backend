@@ -6,9 +6,9 @@ PATCH /api/share/activity/<id>/        {public: true}: anyone with the link can 
 GET   /api/share/recipients/?kind=     people (and ride chats, for rides/routes/activities) to Send to
 POST  /api/share/send/                 {kind, id, users: [...], chats: [...], note}
 
-kind: profile | club | club_invite | event | activity | route
+kind: profile | club | club_invite | event | activity | route | segment
 
-Public pages (no sign-in): /u/<id>  /c/<id>  /join/<club>-<member>-<code>  /e/<id>  /a/<id>  /r/<id>
+Public pages (no sign-in): /u/<id>  /c/<id>  /join/<club>-<member>-<code>  /e/<id>  /a/<id>  /r/<id>  /s/<id>
 """
 
 import hashlib
@@ -160,6 +160,26 @@ def card(kind, pk, viewer, request=None):
                     public=a.link_public, qr_label='', link=f'/activity/{a.id}',
                     story={'title': a.title, 'line': [[round(p[0], 5), round(p[1], 5)] for p in line],
                            'stats': [{'label': k, 'value': v} for k, v in stats]})
+    if kind == 'segment':
+        from apps.performance.models import Segment
+        from apps.performance.segments import segment_page
+        seg = get_object_or_404(Segment, pk=pk, is_active=True)
+        p = segment_page(seg, viewer, 'club', request)
+        pr = p['pr']
+        rec = p['record']
+        sub = ' · '.join(x for x in [f'Your PR {pr["time"]}' if pr else '',
+                                     f'{rec["label"]} {rec["time"]}' if rec else ''] if x) or seg.area
+        stats = [{'label': s['label'], 'value': f'{s["value"]} {s["unit"]}'.replace(' %', '%')} for s in p['stats'][:2]]
+        if rec:
+            stats.append({'label': rec['label'], 'value': rec['time']})
+        return dict(kind=kind, id=seg.id, heading='Share this segment', title=seg.name, sub=sub,
+                    url=f'{base()}/s/{seg.id}', thumb=pr['time'] if pr else initials(seg.name), thumb_bg=GOLD,
+                    vis='Anyone with the link can see the segment', chats=True, can_public=False, public=False,
+                    qr_label='', link=f'/segments/{seg.id}',
+                    story={'title': seg.area or seg.name, 'line': p['line'], 'stats': stats,
+                           'big': ({'label': f'Your PR · {seg.name}', 'value': pr['time'],
+                                    'note': pr['note'].split(' · ')[-1].replace(' in club', ' in the club')}
+                                   if pr else None)})
     if kind == 'route':
         from apps.routes.views import visible_routes
         r = visible_routes(viewer).filter(pk=pk).first()
@@ -220,7 +240,7 @@ class RecipientsView(APIView):
                 seen.add(f.followee_id)
                 people.append(dict(person(f.followee, request), via='You follow'))
         chats = []
-        if request.query_params.get('kind') in ('event', 'activity', 'route'):
+        if request.query_params.get('kind') in ('event', 'activity', 'route', 'segment'):
             for ch in Chat.objects.filter(kind='ride', members__user=user, closes_at__gt=timezone.now()) \
                     .select_related('event').order_by('event__start_time')[:6]:
                 chats.append({'id': ch.id, 'title': chat_title(ch, user), 'initials': initials(ch.event.title)})
@@ -372,3 +392,19 @@ def public_route(request, pk):
                         ('Elev Gain', climb(r.elevation_gain_m, 'mi')),
                         ('Type', 'Loop' if r.is_loop else 'Point to point')],
                  svg=_svg_points(sample(r.line, 300)), cta='Ride it with the A Good Fit app.')
+
+
+def public_segment(request, pk):
+    from apps.performance.models import Segment, SegmentEffort
+    seg = get_object_or_404(Segment, pk=pk, is_active=True)
+    best = (SegmentEffort.objects.filter(segment=seg, private=False, user__is_active=True)
+            .select_related('user').order_by('elapsed_s').first())
+    from apps.performance.segments import clock
+    facts = [('Length', f'{dist(seg.distance_m, "mi")} · {dist(seg.distance_m, "km")}'),
+             ('Avg Grade', f'{seg.avg_grade:.1f}%'),
+             ('Attempts', f'{SegmentEffort.objects.filter(segment=seg).count():,}')]
+    if best:
+        facts.append(('Record', f'{clock(best.elapsed_s)} · {person(best.user)["first_name"]}'))
+    return _page(request, eyebrow=f'Segment · {seg.area}' if seg.area else 'Segment', title=seg.name,
+                 initials=initials(seg.name), color=GOLD, facts=facts, svg=_svg_points(seg.line),
+                 cta='Ride it and see where you land in the A Good Fit app.')

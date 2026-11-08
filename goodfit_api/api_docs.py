@@ -47,6 +47,7 @@ TAG_RULES = [
     (r'^/api/social/\{kind\}/', 'Posts, comments & props'),
     (r'^/api/social/(people|me/profile)/', 'People & profiles'),
     (r'^/api/notifications/', 'Notifications'),
+    (r'^/api/performance/', 'Performance'),
     (r'^/api/share/', 'Sharing'),
     (r'^/api/activities/(live|summaries)/', 'Legacy · live tracking'),
     (r'^/api/activities/', 'Activities'),
@@ -77,6 +78,9 @@ TAGS = [
     ('Notifications', 'Props (grouped), comments, follows, ride invites and changes, day-before reminders, club '
                       'announcements and report updates. Each category can be turned off. Register a phone for push '
                       'with /devices/.'),
+    ('Performance', 'Segments (matched on upload, PRs, leaderboards All-time / This Year / Club / Following, next to '
+                    'chase, live alerts while recording), challenges and trophies, and Training (week, month, year, '
+                    'all; consistency; personal records; the fitness trend is Plus).'),
     ('Sharing', 'The share sheet: the card, the public-link switch for activities, people and ride chats to Send to. '
                 'Links open public preview pages at /u/, /c/, /e/, /a/ and /r/.'),
     ('Clubs & community', 'The Community hub, club pages, members and leaderboards.'),
@@ -272,6 +276,10 @@ BODIES = {
         'token': s('FCM registration token'), 'platform': s(enum=['ios', 'android'])}, ['token', 'platform']), ()),
     ('post', '/api/notifications/read-all/'): ('Mark all read', None, ()),
     ('post', '/api/notifications/{id}/read/'): ('Mark one read', None, ()),
+    ('post', '/api/performance/preview/'): ('Segment PRs before saving (Save screen)', obj({
+        'type': s(enum=['ride', 'run']),
+        'track': arr(obj({'lat': n(), 'lng': n(), 'alt': n(), 't': i('epoch ms'), 'seg': i()}))}, ['type', 'track']), ()),
+    ('post', '/api/performance/challenges/{id}/join/'): ('Join a challenge', None, ()),
     ('patch', '/api/share/{kind}/{id}/'): ('Anyone with the link (activities)', obj({'public': b()}, ['public']), ()),
     ('post', '/api/share/send/'): ('Send in A Good Fit', obj({
         'kind': s(enum=['profile', 'club', 'club_invite', 'event', 'activity', 'route']), 'id': i(),
