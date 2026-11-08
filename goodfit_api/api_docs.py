@@ -60,6 +60,7 @@ TAG_RULES = [
     (r'^/api/chats/', 'Chats'),
     (r'^/api/safety/', 'Safety'),
     (r'^/api/match/', 'A Good Match'),
+    (r'^/api/plus/', 'A Good Fit Plus'),
     (r'^/api/matching/', 'Legacy · matching'),
     (r'^/api/messaging/', 'Legacy · messaging'),
 ]
@@ -96,6 +97,11 @@ TAGS = [
                      'five a day. A like that is liked back locks the match until the two meet up or one moves on; '
                      'moving on closes the private match chat and pauses new matches until 9:00 AM the next day. '
                      'Match chats are in Chats (kind `match`), text only and never shareable.'),
+    ('A Good Fit Plus', 'The member subscription, sold through the App Store and Google Play (7-day free trial). '
+                        'After a purchase or Restore, send the store’s proof to `verify/` or `restore/`; the server '
+                        'checks it with the store and keeps `plan` in step with renewals, grace periods and refunds '
+                        'from the store webhooks. Plus-only actions answer `402 plus_required` '
+                        '(or `403 early_rsvp` for capped rides that haven’t opened to everyone yet).'),
     ('Legacy · live tracking', 'Older server-side tracking. New clients record on the phone and save with `POST /api/activities/record/`.'),
     ('Legacy · messaging', 'Older 1:1 conversations, kept for old app versions. Use Chats.'),
     ('Legacy · matching', 'The original fitness-buddy swipes, kept for old app versions. Use A Good Match.'),
@@ -294,6 +300,16 @@ BODIES = {
         'age_min': i('21 or more'), 'age_max': i(), 'max_miles': i(),
         'prompts': arr(obj({'q': s('One of prompt_options'), 'a': s()})), 'pace_note': s('"Easy, chatty"')}), ()),
     ('post', '/api/match/{id}/suggest/'): ('Suggest a first meetup', obj({'event': i('Event id (default: the idea shown)')}), ()),
+    ('post', '/api/plus/verify/'): ('Check a purchase with the store and turn on Plus', obj({
+        'store': s(enum=['apple', 'google', 'test']),
+        'data': s('Apple: the StoreKit 2 signed transaction (JWS). Google: the purchase token.'),
+        'product': s('test store only', enum=['monthly', 'yearly'])}, ['store']), ()),
+    ('post', '/api/plus/restore/'): ('Restore purchases', obj({
+        'store': s(enum=['apple', 'google']), 'items': arr(s(), 'Signed transactions or purchase tokens')},
+        ['store', 'items']), ()),
+    ('post', '/api/plus/webhooks/apple/'): ('App Store Server Notifications V2', obj({'signedPayload': s()}), ()),
+    ('post', '/api/plus/webhooks/google/'): ('Google Play real-time notifications (Pub/Sub push)', obj({
+        'message': obj({'data': s('base64 JSON')})}), ()),
     ('patch', '/api/share/{kind}/{id}/'): ('Anyone with the link (activities)', obj({'public': b()}, ['public']), ()),
     ('post', '/api/share/send/'): ('Send in A Good Fit', obj({
         'kind': s(enum=['profile', 'club', 'club_invite', 'event', 'activity', 'route']), 'id': i(),

@@ -58,6 +58,7 @@ urlpatterns = [
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/performance/', include('apps.performance.urls')),
     path('api/match/', include('apps.goodmatch.urls')),
+    path('api/plus/', include('apps.plus.urls')),
     # Share sheet (Phase 6) and the public pages its links open.
     path('api/share/recipients/', share.RecipientsView.as_view(), name='share-recipients'),
     path('api/share/send/', share.SendView.as_view(), name='share-send'),

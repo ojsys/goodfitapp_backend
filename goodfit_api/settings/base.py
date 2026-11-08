@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.performance',
     'apps.goodmatch',
+    'apps.plus',
 ]
 
 MIDDLEWARE = [
@@ -221,3 +222,22 @@ FCM_CREDENTIALS = config('FCM_CREDENTIALS', default='')
 FCM_CREDENTIALS_JSON = config('FCM_CREDENTIALS_JSON', default='')
 # Base for share links and their public preview pages.
 SHARE_BASE_URL = config('SHARE_BASE_URL', default='') or PUBLIC_BASE_URL
+
+# A Good Fit Plus (Phase 9). Store product ids, the same on both stores.
+PLUS_PRODUCTS = {
+    'monthly': config('PLUS_PRODUCT_MONTHLY', default='agoodfit.plus.monthly'),
+    'yearly': config('PLUS_PRODUCT_YEARLY', default='agoodfit.plus.yearly'),
+}
+# App Store: the app's bundle id (purchases for other apps are refused).
+APPLE_BUNDLE_ID = config('APPLE_BUNDLE_ID', default='')
+# Google Play: package name and a service account with access to the
+# Play Developer API (JSON text, or a path to the file).
+GOOGLE_PLAY_PACKAGE = config('GOOGLE_PLAY_PACKAGE', default='')
+GOOGLE_PLAY_CREDENTIALS_JSON = config('GOOGLE_PLAY_CREDENTIALS_JSON', default='')
+GOOGLE_PLAY_CREDENTIALS = config('GOOGLE_PLAY_CREDENTIALS', default='')
+# Secret in the Pub/Sub push URL: /api/plus/webhooks/google/?token=...
+GOOGLE_RTDN_TOKEN = config('GOOGLE_RTDN_TOKEN', default='')
+# Lets the app buy Plus without a store (development and demos only).
+PLUS_TEST_PURCHASES = config('PLUS_TEST_PURCHASES', default=False, cast=bool)
+# Early RSVP: capped rides open to Plus members first, for this long.
+EARLY_RSVP_HOURS = config('EARLY_RSVP_HOURS', default=24, cast=int)

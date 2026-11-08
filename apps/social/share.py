@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.activities.models import Activity
+from apps.plus.services import story_styles
 from apps.events.models import Event
 from apps.routes.models import Route
 from apps.safety.visibility import blocked_ids, is_blocked
@@ -159,7 +160,8 @@ def card(kind, pk, viewer, request=None):
                     thumb_bg=CLAY, vis=vis, chats=True, can_public=mine and a.visibility not in ('everyone',),
                     public=a.link_public, qr_label='', link=f'/activity/{a.id}',
                     story={'title': a.title, 'line': [[round(p[0], 5), round(p[1], 5)] for p in line],
-                           'stats': [{'label': k, 'value': v} for k, v in stats]})
+                           'stats': [{'label': k, 'value': v} for k, v in stats],
+                           'styles': story_styles(viewer)})
     if kind == 'segment':
         from apps.performance.models import Segment
         from apps.performance.segments import segment_page
@@ -179,7 +181,8 @@ def card(kind, pk, viewer, request=None):
                     story={'title': seg.area or seg.name, 'line': p['line'], 'stats': stats,
                            'big': ({'label': f'Your PR · {seg.name}', 'value': pr['time'],
                                     'note': pr['note'].split(' · ')[-1].replace(' in club', ' in the club')}
-                                   if pr else None)})
+                                   if pr else None),
+                           'styles': story_styles(viewer)})
     if kind == 'route':
         from apps.routes.views import visible_routes
         r = visible_routes(viewer).filter(pk=pk).first()

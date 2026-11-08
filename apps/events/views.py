@@ -86,6 +86,13 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Early RSVP: capped rides open to Plus members first.
+        from apps.plus.services import rsvp_blocked
+        early = rsvp_blocked(event, request.user)
+        if early and not event.rsvps.filter(user=request.user, status='going').exists():
+            return Response({'code': 'early_rsvp', 'error': early, 'message': early},
+                            status=status.HTTP_403_FORBIDDEN)
+
         # Check if event is in the past
         if event.is_past:
             return Response(

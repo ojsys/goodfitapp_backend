@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.events.models import Event, EventRSVP
+from apps.plus.services import early_rsvp
 from apps.safety.visibility import blocked_ids, not_interested_ids
 from apps.users.age_gate import safe_zone
 
@@ -148,6 +149,8 @@ def event_card(event, user, request=None):
         'going_people': [person(r.user, request) for r in shown[:4]],
         'i_going': any(r.user_id == user.id for r in going),
         'club_id': event.club_id,
+        'capacity': event.max_attendees,
+        'early': early_rsvp(event, user),
     }
 
 

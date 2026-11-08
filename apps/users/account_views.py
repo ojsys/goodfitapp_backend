@@ -85,12 +85,18 @@ class MeView(APIView):
         return Response(_me(u, request))
 
 
+def _plan_line(user):
+    from apps.plus.services import current, status_line
+    return status_line(current(user), user) if user.plan == 'plus' else ''
+
+
 def settings_payload(user):
     from apps.notifications.views import settings_payload as notif
     from apps.safety.models import Block, Report
     reports = Report.objects.filter(reporter=user)
     return {
         'plan': user.plan,
+        'plan_line': _plan_line(user),
         'email': user.email,
         'name': user.full_name,
         'neighborhood': user.neighborhood,
@@ -213,6 +219,10 @@ def export(user):
         'reports_made': rows(Report.objects.filter(reporter=user), 'target_kind', 'reason', 'status',
                              'created_at'),
         'a_good_match': _match_export(user),
+        'plus': [{'store': s.get_store_display(), 'product': s.product, 'status': s.status,
+                  'started_at': s.started_at.isoformat(),
+                  'ends_at': s.expires_at.isoformat() if s.expires_at else None}
+                 for s in user.subscriptions.all()],
     }
 
 

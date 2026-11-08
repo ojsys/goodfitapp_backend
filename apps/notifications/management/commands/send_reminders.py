@@ -39,4 +39,6 @@ class Command(BaseCommand):
                     sent += 1
         from apps.performance.challenges import nudge_ending
         nudges = nudge_ending()
-        self.stdout.write(f'{sent} reminder(s) sent, {nudges} challenge nudge(s)')
+        from apps.plus.services import sweep
+        ended = sweep()
+        self.stdout.write(f'{sent} reminder(s) sent, {nudges} challenge nudge(s), {ended} Plus change(s)')

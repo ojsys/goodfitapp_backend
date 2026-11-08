@@ -113,3 +113,6 @@ CSRF_COOKIE_SECURE = False
 print("Running in DEVELOPMENT mode")
 print(f"Database: {DATABASES['default']['NAME']}")
 print(f"CORS: Allow all origins = {CORS_ALLOW_ALL_ORIGINS}")
+
+# Buy Plus without a store while developing.
+PLUS_TEST_PURCHASES = config('PLUS_TEST_PURCHASES', default=True, cast=bool)  # noqa: F405
