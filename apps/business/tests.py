@@ -397,3 +397,4 @@ class PortalServingTests(TestCase):
         self.assertIn(self.client.get('/business/team').status_code, (200, 503))
         self.assertEqual(self.client.get('/featured-events-policy/').status_code, 200)
         self.assertContains(self.client.get('/community-guidelines/'), 'Show up. Look out. Keep it kind.')
+        self.assertContains(self.client.get('/download/'), 'Android')

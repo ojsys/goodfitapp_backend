@@ -13,7 +13,7 @@ from django.http import HttpResponse
 
 INDEX = os.path.join(settings.BASE_DIR, 'portal', 'dist', 'index.html')
 PASS = ('/api/', '/static/', '/media/', '/admin/', '/openapi', '/swagger', '/redoc', '/community-guidelines/',
-        '/featured-events-policy/')
+        '/featured-events-policy/', '/download/')
 _cache = {}
 
 

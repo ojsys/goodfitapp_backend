@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Get the A Good Fit test app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,700&display=swap">
+<style>
+  :root { --cream:#F4EFE7; --ink:#31391B; --muted:#6E6A5C; --olive:#6B7F3C; --olive-deep:#4E5E2B; --olive-tint:#EEF2E2; --line:#E2DDD1; --gold-tint:#F3E8CC; --gold-deep:#7D6224; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--cream); color: var(--ink); font-family: 'Inter Tight', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 16px 64px; }
+  .brand { font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 20px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(32px, 7vw, 44px); line-height: 1.08; margin: 22px 0 10px; }
+  h1 em { font-style: italic; color: var(--olive-deep); }
+  .lede { font-size: 17px; line-height: 1.55; color: var(--muted); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-top: 20px; }
+  .card h2 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .meta { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .btn { display: flex; align-items: center; justify-content: center; height: 54px; border-radius: 14px; background: var(--olive); color: #fff; font-weight: 700; font-size: 17px; text-decoration: none; margin-top: 16px; }
+  .btn:hover { background: var(--olive-deep); }
+  .btn:focus-visible { outline: 3px solid var(--olive); outline-offset: 3px; }
+  ol { margin: 16px 0 0 20px; line-height: 1.6; font-size: 15px; }
+  li { margin-top: 6px; }
+  .note { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--gold-tint); color: var(--gold-deep); font-size: 14px; line-height: 1.5; font-weight: 600; }
+  .ok { background: var(--olive-tint); color: var(--olive-deep); }
+  code { font-size: 13px; word-break: break-all; }
+  .foot { margin-top: 26px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">A Good Fit</div>
+  <h1>Try the app <em>before launch</em></h1>
+  <p class="lede">Test builds for early members. You must be 21 or older to sign up. Things may change or break; tell us what you find.</p>
+
+  <section class="card" aria-labelledby="android">
+    <h2 id="android">Android</h2>
+    {% if android %}
+      <p class="meta">Version {{ android.version }} · {{ android.mb }} MB · {{ android.date }}</p>
+      <a class="btn" href="{{ android.url }}" download>Download for Android</a>
+      <ol>
+        <li>Open the downloaded file (it’s in Downloads, or tap the notification).</li>
+        <li>If Android asks, allow your browser to <strong>install unknown apps</strong>, then go back and tap <strong>Install</strong>.</li>
+        <li>Open A Good Fit and create your account.</li>
+      </ol>
+      <p class="note">If Play Protect warns about an unknown app, tap <strong>More details → Install anyway</strong>. That’s expected for test builds that don’t come from the Play Store.</p>
+      <p class="foot">To update, download the newest build here and install it over the old one. Checksum (SHA-256): <code>{{ android.sha256 }}</code></p>
+    {% else %}
+      <p class="meta">The Android build isn’t up yet. Check back soon.</p>
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="ios">
+    <h2 id="ios">iPhone</h2>
+    {% if ios and ios.testflight %}
+      <p class="meta">Through Apple’s TestFlight app.</p>
+      <a class="btn" href="{{ ios.testflight }}">Join the iPhone beta</a>
+      <ol>
+        <li>Install <strong>TestFlight</strong> from the App Store if you don’t have it.</li>
+        <li>Tap <strong>Join the iPhone beta</strong> above, then <strong>Install</strong>.</li>
+      </ol>
+    {% else %}
+      <p class="note">The iPhone test build is coming. Apple only allows test installs through TestFlight, which we’re setting up now.</p>
+    {% endif %}
+  </section>
+
+  <p class="foot">Share this page: <code>{{ page }}</code></p>
+</main>
+</body>
+</html>

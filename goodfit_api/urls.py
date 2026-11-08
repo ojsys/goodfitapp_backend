@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView, TemplateView
 
-from apps.business import policies
+from apps.business import downloads, policies
 from apps.business.portal import index as portal_index
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -32,6 +32,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
     re_path(r'^business(?:/.*)?$', portal_index, name='business-portal'),
     path('community-guidelines/', policies.guidelines, name='community-guidelines'),
+    path('download/', downloads.download, name='download'),
     path('featured-events-policy/', policies.featured_policy, name='featured-policy'),
 
     # Admin
