@@ -62,8 +62,23 @@
         <li>Install <strong>TestFlight</strong> from the App Store if you don’t have it.</li>
         <li>Tap <strong>Join the iPhone beta</strong> above, then <strong>Install</strong>.</li>
       </ol>
+    {% elif ipa %}
+      <p class="meta">Version {{ ipa.version }} · {{ ipa.mb }} MB · {{ ipa.date }} · needs a Mac or Windows PC</p>
+      <p class="note">Until we’re on TestFlight, iPhone testing takes about 10 minutes of setup on a computer, and the app has to be reinstalled every 7 days. If that’s too much, check back soon for a one-tap TestFlight link.</p>
+      <a class="btn" href="{{ ipa.url }}" download>Download iPhone file (.ipa)</a>
+      <ol>
+        <li>On your computer, install <strong>Sideloadly</strong> from sideloadly.io (free). On Windows, also install iTunes from apple.com, not the Microsoft Store.</li>
+        <li>Download the iPhone file above <strong>onto the computer</strong>.</li>
+        <li>Plug your iPhone into the computer and tap <strong>Trust</strong> on the phone.</li>
+        <li>Drag the file into Sideloadly, enter your Apple ID and press <strong>Start</strong>. Apple uses it to sign the app for your phone only.</li>
+        <li>On the iPhone, turn on <strong>Settings → Privacy &amp; Security → Developer Mode</strong> and restart when asked.</li>
+        <li>Then go to <strong>Settings → General → VPN &amp; Device Management</strong>, tap your Apple ID and tap <strong>Trust</strong>.</li>
+        <li>Open A Good Fit and sign up with your email.</li>
+      </ol>
+      <p class="note">This build stops opening after 7 days. Repeat step 4 to renew it, and your data stays. Sign in with Apple, notifications and Plus purchases don’t work in this build. Sideloadly is a third-party tool, so some testers use a spare Apple ID with it.</p>
+      <p class="foot">Checksum (SHA-256): <code>{{ ipa.sha256 }}</code></p>
     {% else %}
-      <p class="note">The iPhone test build is coming. Apple only allows test installs through TestFlight, which we’re setting up now.</p>
+      <p class="note">The iPhone test build is coming soon.</p>
     {% endif %}
   </section>
 

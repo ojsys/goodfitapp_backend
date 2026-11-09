@@ -19,14 +19,19 @@ def _latest():
         return {}
 
 
+def _build(b):
+    if not b:
+        return None
+    return dict(b, url=f'{settings.MEDIA_URL.rstrip("/")}/downloads/{b["file"]}',
+                mb=f'{b.get("bytes", 0) / 1048576:.0f}')
+
+
 def download(request):
     d = _latest()
-    android = d.get('android')
-    if android:
-        android = dict(android, url=f'{settings.MEDIA_URL.rstrip("/")}/downloads/{android["file"]}',
-                       mb=f'{android.get("bytes", 0) / 1048576:.0f}')
+    android = _build(d.get('android'))
+    ipa = _build(d.get('ios_ipa'))  # unsigned, for sideloading with the tester's own Apple ID
     ios = d.get('ios')  # {"testflight": "https://testflight.apple.com/join/..."} once there's an Apple account
-    r = render(request, 'download.html', {'android': android, 'ios': ios,
+    r = render(request, 'download.html', {'android': android, 'ipa': ipa, 'ios': ios,
                                           'page': request.build_absolute_uri()})
     r['Cache-Control'] = 'no-cache'
     return r
