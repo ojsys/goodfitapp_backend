@@ -14,6 +14,17 @@ const P = {
   calendar: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>,
   plus: <path d="M12 5v14M5 12h14" strokeLinecap="round" />,
   bike: <><circle cx="6" cy="16" r="3.5" /><circle cx="18" cy="16" r="3.5" /><path d="M6 16l4-8h5l3 8M10 8l4 8M9 5h3" strokeLinejoin="round" /></>,
+  shield: <path d="M12 3.5l7 2.8v5.4c0 4.3-3 7.6-7 8.8-4-1.2-7-4.5-7-8.8V6.3z" strokeLinejoin="round" />,
+  flag: <><path d="M5.5 20.5V4" /><path d="M5.5 4.5h11l-2 4 2 4h-11" strokeLinejoin="round" /></>,
+  db: <><ellipse cx="12" cy="6" rx="7" ry="2.5" /><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6" /><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5" /></>,
+  clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" strokeLinejoin="round" /></>,
+  store: <><path d="M4 9.5l1.5-5h13l1.5 5" strokeLinejoin="round" /><path d="M4 9.5c0 1.5 1.3 2.5 2.7 2.5S9.3 11 9.3 9.5c0 1.5 1.3 2.5 2.7 2.5s2.7-1 2.7-2.5c0 1.5 1.3 2.5 2.6 2.5S20 11 20 9.5" /><path d="M5.5 12v8h13v-8" /></>,
+  chat: <path d="M4.5 18.5l1.2-3.4A7.5 7.5 0 1 1 9 18.6z" strokeLinejoin="round" />,
+  search: <><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></>,
+  out: <><path d="M14 4h6v6M20 4l-9 9" strokeLinejoin="round" /><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></>,
+  trash: <><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13" strokeLinejoin="round" /></>,
+  edit: <path d="M4.5 19.5l1-4L16 5a2 2 0 0 1 3 3L8.5 18.5z" strokeLinejoin="round" />,
+  user: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></>,
   heart: <path d="M12 19.5s-7.5-4.4-7.5-10A4 4 0 0 1 12 7a4 4 0 0 1 7.5 2.5c0 5.6-7.5 10-7.5 10z" strokeLinejoin="round" />,
 }
 

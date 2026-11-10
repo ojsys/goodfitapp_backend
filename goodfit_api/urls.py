@@ -11,6 +11,7 @@ from django.views.generic import RedirectView, TemplateView
 
 from apps.business import downloads, policies
 from apps.business.portal import index as portal_index
+from apps.staff.page import index as staff_index
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -31,6 +32,7 @@ urlpatterns = [
     # Landing Page
     path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
     re_path(r'^business(?:/.*)?$', portal_index, name='business-portal'),
+    re_path(r'^staff(?:/.*)?$', staff_index, name='staff-dashboard'),
     path('community-guidelines/', policies.guidelines, name='community-guidelines'),
     path('download/', downloads.download, name='download'),
     path('featured-events-policy/', policies.featured_policy, name='featured-policy'),
@@ -67,6 +69,7 @@ urlpatterns = [
     path('api/match/', include('apps.goodmatch.urls')),
     path('api/plus/', include('apps.plus.urls')),
     path('api/business/', include('apps.business.urls')),
+    path('api/staff/', include('apps.staff.urls')),
     # Share sheet (Phase 6) and the public pages its links open.
     path('api/share/recipients/', share.RecipientsView.as_view(), name='share-recipients'),
     path('api/share/send/', share.SendView.as_view(), name='share-send'),

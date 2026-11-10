@@ -1,0 +1,249 @@
+/* The Django admin in A Good Fit's design tokens (05-Design-System):
+   cream surfaces, olive actions, ink text, clay accents, Fraunces + Inter Tight.
+   Django's admin is built on these CSS variables, so this restyles every page. */
+
+html[data-theme="light"],
+:root {
+  --primary: #6B7F3C;
+  --secondary: #4E5E2B;
+  --accent: #F3E8CC;
+  --primary-fg: #FFFFFF;
+
+  --body-fg: #31391B;
+  --body-bg: #FBF9F5;
+  --body-quiet-color: #6E6A5C;
+  --body-medium-color: #5C5848;
+  --body-loud-color: #31391B;
+
+  --header-color: #EEF2E2;
+  --header-branding-color: #FFFFFF;
+  --header-bg: #31391B;
+  --header-link-color: #FFFFFF;
+
+  --breadcrumbs-fg: #DDE3CB;
+  --breadcrumbs-link-fg: #FFFFFF;
+  --breadcrumbs-bg: #4E5E2B;
+
+  --link-fg: #4E5E2B;
+  --link-hover-color: #A65F2E;
+  --link-selected-fg: #31391B;
+
+  --hairline-color: #EBE6DB;
+  --border-color: #E2DDD1;
+
+  --error-fg: #B3402F;
+  --message-success-bg: #EEF2E2;
+  --message-warning-bg: #F3E8CC;
+  --message-error-bg: #F6DDD8;
+
+  --darkened-bg: #F4EFE7;
+  --selected-bg: #EEF2E2;
+  --selected-row: #F7F9F1;
+
+  --button-fg: #FFFFFF;
+  --button-bg: #6B7F3C;
+  --button-hover-bg: #4E5E2B;
+  --default-button-bg: #4E5E2B;
+  --default-button-hover-bg: #31391B;
+  --close-button-bg: #8C8775;
+  --close-button-hover-bg: #5C5848;
+  --delete-button-bg: #B3402F;
+  --delete-button-hover-bg: #8E3022;
+
+  --object-tools-fg: #FFFFFF;
+  --object-tools-bg: #8C8775;
+  --object-tools-hover-bg: #5C5848;
+
+  --font-family-primary: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-family-monospace: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --agf-display: Fraunces, Georgia, serif;
+  --agf-card: #FFFFFF;
+  --agf-clay: #A65F2E;
+  --agf-clay-tint: #F2E2D4;
+  color-scheme: light;
+}
+
+/* Warm dark mode (Django's theme toggle, or the system setting on "auto"). */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --primary: #8FA556;
+    --secondary: #5E7233;
+    --accent: #3B3420;
+    --primary-fg: #1B1F10;
+    --body-fg: #ECE8DE;
+    --body-bg: #1D2012;
+    --body-quiet-color: #A9A491;
+    --body-medium-color: #C9C4B3;
+    --body-loud-color: #F7F4EC;
+    --header-color: #C9C4B3;
+    --header-branding-color: #F7F4EC;
+    --header-bg: #14170C;
+    --header-link-color: #F7F4EC;
+    --breadcrumbs-fg: #A9A491;
+    --breadcrumbs-link-fg: #F7F4EC;
+    --breadcrumbs-bg: #2A3018;
+    --link-fg: #B5C77F;
+    --link-hover-color: #E0A274;
+    --link-selected-fg: #F7F4EC;
+    --hairline-color: #2E3320;
+    --border-color: #3A402A;
+    --error-fg: #F08C7A;
+    --message-success-bg: #2D3A17;
+    --message-warning-bg: #3E3418;
+    --message-error-bg: #4A221B;
+    --darkened-bg: #24281A;
+    --selected-bg: #2D3A17;
+    --selected-row: #262C17;
+    --button-fg: #1B1F10;
+    --button-bg: #8FA556;
+    --button-hover-bg: #A6BB6B;
+    --default-button-bg: #B5C77F;
+    --default-button-hover-bg: #C8D898;
+    --close-button-bg: #4A4F3A;
+    --close-button-hover-bg: #5C624A;
+    --delete-button-bg: #B3402F;
+    --delete-button-hover-bg: #C9533F;
+    --object-tools-fg: #1B1F10;
+    --object-tools-bg: #A9A491;
+    --object-tools-hover-bg: #C9C4B3;
+    --agf-card: #24281A;
+    --agf-clay: #E0A274;
+    --agf-clay-tint: #3E2A1A;
+    color-scheme: dark;
+  }
+}
+html[data-theme="dark"] {
+  --primary: #8FA556;
+  --secondary: #5E7233;
+  --accent: #3B3420;
+  --primary-fg: #1B1F10;
+  --body-fg: #ECE8DE;
+  --body-bg: #1D2012;
+  --body-quiet-color: #A9A491;
+  --body-medium-color: #C9C4B3;
+  --body-loud-color: #F7F4EC;
+  --header-color: #C9C4B3;
+  --header-branding-color: #F7F4EC;
+  --header-bg: #14170C;
+  --header-link-color: #F7F4EC;
+  --breadcrumbs-fg: #A9A491;
+  --breadcrumbs-link-fg: #F7F4EC;
+  --breadcrumbs-bg: #2A3018;
+  --link-fg: #B5C77F;
+  --link-hover-color: #E0A274;
+  --link-selected-fg: #F7F4EC;
+  --hairline-color: #2E3320;
+  --border-color: #3A402A;
+  --error-fg: #F08C7A;
+  --message-success-bg: #2D3A17;
+  --message-warning-bg: #3E3418;
+  --message-error-bg: #4A221B;
+  --darkened-bg: #24281A;
+  --selected-bg: #2D3A17;
+  --selected-row: #262C17;
+  --button-fg: #1B1F10;
+  --button-bg: #8FA556;
+  --button-hover-bg: #A6BB6B;
+  --default-button-bg: #B5C77F;
+  --default-button-hover-bg: #C8D898;
+  --close-button-bg: #4A4F3A;
+  --close-button-hover-bg: #5C624A;
+  --delete-button-bg: #B3402F;
+  --delete-button-hover-bg: #C9533F;
+  --object-tools-fg: #1B1F10;
+  --object-tools-bg: #A9A491;
+  --object-tools-hover-bg: #C9C4B3;
+  --agf-card: #24281A;
+  --agf-clay: #E0A274;
+  --agf-clay-tint: #3E2A1A;
+  color-scheme: dark;
+}
+
+body { font-size: 14.5px; -webkit-font-smoothing: antialiased; }
+
+/* header */
+#header { padding: 14px 32px; align-items: center; }
+#branding h1, #site-name { margin: 0; }
+.agf-brand { font-family: var(--agf-display); font-size: 22px; font-weight: 700; color: var(--header-branding-color) !important; letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 10px; }
+.agf-tag { font-family: var(--font-family-primary); font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; padding: 3px 9px; border-radius: 100px; background: var(--agf-clay); color: #fff; }
+#user-tools { font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+#user-tools a { border-bottom: none; font-weight: 600; }
+#user-tools a:hover, #user-tools a:focus { color: var(--accent); text-decoration: underline; }
+.agf-dash { color: #F3E8CC !important; }
+div.breadcrumbs { padding: 10px 32px; font-size: 13px; }
+
+/* type */
+h1, #content h1 { font-family: var(--agf-display); font-weight: 700; color: var(--body-loud-color); font-size: 30px; letter-spacing: -0.01em; }
+#content h2 { font-family: var(--font-family-primary); font-weight: 700; }
+#content { padding: 24px 32px 40px; }
+#content-main, #content-related { margin-top: 4px; }
+a:link, a:visited { font-weight: 600; }
+
+/* app list + cards */
+.module { background: var(--agf-card); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(49, 57, 27, 0.05); }
+.module h2, .module caption, .inline-group h2 {
+  background: var(--darkened-bg); color: var(--body-loud-color); font-size: 13px; font-weight: 700;
+  text-transform: none; letter-spacing: 0; padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+}
+.module h2 a.section:link, .module h2 a.section:visited, .module caption a.section { color: var(--body-loud-color); }
+.app-list .module table, #content-main .module table { width: 100%; }
+.module th, .module td { padding: 10px 16px; }
+#nav-sidebar { background: var(--darkened-bg); border-right: 1px solid var(--border-color); }
+#nav-sidebar .module { border-radius: 12px; margin: 0 10px 12px; }
+#nav-sidebar .current-app .section:link, #nav-sidebar .current-app .section:visited { color: var(--agf-clay); }
+#nav-sidebar .current-model { background: var(--selected-bg); }
+.toggle-nav-sidebar { background: var(--darkened-bg); border-color: var(--border-color); }
+#nav-filter { border-radius: 10px; border-color: var(--border-color); padding: 7px 10px; }
+
+/* change lists */
+#changelist .actions { background: var(--darkened-bg); border-radius: 12px 12px 0 0; padding: 10px 14px; border-color: var(--border-color); }
+#result_list thead th { background: var(--darkened-bg); color: var(--body-quiet-color); font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--border-color); }
+#result_list thead th a { color: var(--body-quiet-color) !important; }
+#result_list tbody tr:hover { background: var(--selected-row); }
+#changelist-filter { background: var(--agf-card); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; }
+#changelist-filter h2 { background: var(--darkened-bg); text-transform: none; font-size: 13px; letter-spacing: 0; padding: 12px 16px; }
+#changelist-filter h3 { font-size: 13px; font-weight: 700; color: var(--body-loud-color); }
+#changelist-filter li.selected a { color: var(--primary) !important; }
+#changelist-search, #toolbar { background: transparent; border: none; padding: 8px 0; }
+#toolbar #searchbar { border-radius: 10px; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); }
+.paginator { border-top: none; font-size: 13.5px; }
+.paginator a:link, .paginator a:visited { border-radius: 8px; background: var(--primary); }
+
+/* forms */
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number], input[type=tel],
+textarea, select, .vTextField {
+  border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 11px; background: var(--agf-card); color: var(--body-fg);
+}
+input:focus, textarea:focus, select:focus { border-color: var(--primary); outline: 3px solid var(--selected-bg); outline-offset: 0; }
+fieldset.module { border-radius: 14px; }
+.form-row { padding: 12px 16px; border-bottom-color: var(--hairline-color); }
+.aligned label { font-weight: 600; color: var(--body-medium-color); }
+.help, p.help, div.help { color: var(--body-quiet-color); }
+
+/* buttons */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  border-radius: 10px; font-weight: 700; padding: 9px 16px; font-family: var(--font-family-primary);
+}
+.submit-row { background: var(--darkened-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 14px; }
+.submit-row a.deletelink { border-radius: 10px; padding: 9px 16px; }
+.object-tools a:link, .object-tools a:visited { border-radius: 100px; font-weight: 700; text-transform: none; letter-spacing: 0; padding: 6px 14px; }
+
+/* messages */
+ul.messagelist li { border-radius: 12px; margin: 0 0 8px; font-weight: 600; color: var(--body-loud-color); background-image: none; padding-left: 16px; }
+
+/* login */
+body.login { background: linear-gradient(160deg, #6B7F3C 0%, #4E5E2B 65%, #31391B 100%); }
+body.login #container { border-radius: 18px; overflow: hidden; border: none; box-shadow: 0 20px 60px rgba(20, 23, 12, 0.35); background: var(--agf-card); }
+body.login #header { padding: 18px 24px; }
+body.login #content { padding: 20px 24px 26px; }
+body.login .submit-row { background: none; border: none; padding: 8px 0 0; }
+body.login .submit-row input { width: 100%; height: 44px; }
+
+@media (max-width: 767px) {
+  #header, div.breadcrumbs, #content { padding-left: 16px; padding-right: 16px; }
+}
+
+/* The change list wrapper is also a .module: keep it unboxed so wide tables scroll, not clip. */
+#changelist.module { background: none; border: none; border-radius: 0; box-shadow: none; overflow: visible; }
+#changelist .results { background: var(--agf-card); border: 1px solid var(--border-color); border-radius: 0 0 14px 14px; overflow-x: auto; }

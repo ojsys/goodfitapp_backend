@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.goodmatch',
     'apps.plus',
     'apps.business',
+    'apps.staff',  # keep last: sets up the Staff group after every migrate
 ]
 
 MIDDLEWARE = [
