@@ -68,7 +68,8 @@ sync_code() {
 
 start() {
   say "Building and starting (migrations run automatically)"
-  remote "$compose up -d --build --remove-orphans && $SUDO docker image prune -f >/dev/null"
+  # nginx.conf is a bind-mounted file that rsync replaces, so restart nginx to pick it up.
+  remote "$compose up -d --build --remove-orphans && $compose restart nginx >/dev/null && $SUDO docker image prune -f >/dev/null"
   say "Waiting for the API to report healthy"
   for _ in $(seq 1 40); do
     state="$(remote "$SUDO docker inspect -f '{{.State.Health.Status}}' \$($compose ps -q web) 2>/dev/null" || true)"

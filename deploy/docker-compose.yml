@@ -78,8 +78,10 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ${AGF_ROOT:-/opt/agoodfit}/data/media:/srv/media:ro
       - static:/srv/static:ro
+      - tiles:/var/cache/nginx/tiles
     depends_on:
       - web
 
 volumes:
   static:
+  tiles:
