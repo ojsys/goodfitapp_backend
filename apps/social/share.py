@@ -194,7 +194,7 @@ def card(kind, pk, viewer, request=None):
                     sub=' · '.join(x for x in [dist(r.distance_m, units), climb(r.elevation_gain_m, units)] if x),
                     url=f'{base()}/r/{r.id}', thumb=dist(r.distance_m, units).split(' ')[0], thumb_bg=GOLD,
                     vis=vis, chats=True, can_public=False, public=False, qr_label='Scan to open the route',
-                    story=None, link='/routes')
+                    story=None, link=f'/routes?route={r.id}')
     raise Http404
 
 

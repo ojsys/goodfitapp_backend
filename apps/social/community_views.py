@@ -83,6 +83,16 @@ class EventsBrowseView(APIView):
         return Response(community.browse(request.user, day, kind, request))
 
 
+class EventDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        e = get_object_or_404(Event.objects.select_related('club', 'route', 'leader', 'host'), pk=pk)
+        if not community.can_see_event(request.user, e):
+            return _bad('not_found', 'This event isn’t available.', status.HTTP_404_NOT_FOUND)
+        return Response(community.event_detail(e, request.user, request))
+
+
 class HostEventView(APIView):
     """Host an event: a community ride (Plus, host agreement once) or a
     suggestion to one of your clubs (free)."""

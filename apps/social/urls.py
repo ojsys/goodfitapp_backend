@@ -31,6 +31,7 @@ urlpatterns = [
     path('clubs/<int:pk>/leaderboard/', cv.ClubLeaderboardView.as_view(), name='club-leaderboard'),
     path('events/', cv.EventsBrowseView.as_view(), name='events'),
     path('events/host/', cv.HostEventView.as_view(), name='host-event'),
+    path('events/<int:pk>/', cv.EventDetailView.as_view(), name='event-detail'),
     path('buddies/', cv.BuddiesView.as_view(), name='buddies'),
     path('buddies/<int:pk>/hide/', cv.BuddyHideView.as_view(), name='buddy-hide'),
     path('buddies/<int:pk>/invite/', cv.BuddyInviteView.as_view(), name='buddy-invite'),

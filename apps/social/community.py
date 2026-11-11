@@ -131,7 +131,7 @@ def club_page(club, user, request=None):
         'initials': club.initials,
         'color': club.color,
         'banner': request.build_absolute_uri(banner) if banner and request else banner,
-        'meta': ' · '.join(x for x in [club.location or club.neighborhood, f'{members:,} members',
+        'meta': ' · '.join(x for x in [club.location or club.neighborhood, f'{members:,} member{"" if members == 1 else "s"}',
                                         f'Founded {club.founded_year}' if club.founded_year else ''] if x),
         'members': members,
         'joined': bool(mine),
@@ -166,7 +166,7 @@ def club_page(club, user, request=None):
 def recent_ride(e, user):
     tz = safe_zone(user.timezone)
     riders = e.rsvps.filter(status='going').count()
-    bits = [e.start_time.astimezone(tz).strftime('%b %-d'), e.location_name, f'{riders} riders']
+    bits = [e.start_time.astimezone(tz).strftime('%b %-d'), e.location_name, f'{riders} rider{"" if riders == 1 else "s"}']
     if e.distance_m:
         bits.append(f'{e.distance_m / MI:.1f} mi' if user.units != 'km' else f'{e.distance_m / 1000:.1f} km')
     return {'id': e.id, 'title': e.title, 'meta': ' · '.join(b for b in bits if b)}
@@ -299,6 +299,58 @@ def browse(user, day=None, kind=None, request=None):
                    'end': (e.end_time or e.start_time + timedelta(minutes=e.duration_min or 120)).isoformat(),
                    'location': e.location_name} for e in plans],
     }
+
+
+def can_see_event(user, e):
+    """visible_events for one event, cancelled ones included (a "ride
+    cancelled" notification still opens the event)."""
+    if not e.is_active:
+        return False
+    if e.who_can_join == 'anyone' or e.host_id == user.id:
+        return True
+    if e.club_id and ClubMembership.objects.filter(user=user, club_id=e.club_id).exists():
+        return True
+    return (RideInvite.objects.filter(recipient=user, event=e).exists()
+            or e.rsvps.filter(user=user).exists())
+
+
+def event_detail(e, user, request=None):
+    """One event (the Details link on Home, chats, featured cards and Events)."""
+    from apps.business.models import FeaturedPlacement
+    from apps.chats.models import Chat
+    tz = safe_zone(user.timezone)
+    card = browse_card(e, user, request)
+    blocked = blocked_ids(user)
+    going = [r.user for r in e.rsvps.filter(status='going').select_related('user').order_by('created_at')
+             if r.user_id not in blocked]
+    start = e.start_time.astimezone(tz)
+    end = e.end_time or (e.start_time + timedelta(minutes=e.duration_min or 120))
+    chat = Chat.objects.filter(event=e).first()
+    placement = (FeaturedPlacement.objects.filter(event=e, status='approved').select_related('account')
+                 .order_by('-starts_at').first() if e.kind == 'featured' else None)
+    route = e.route if e.route_id else None
+    card.update({
+        'description': e.description or '',
+        'address': e.location_address if e.location_address != e.location_name else '',
+        'when': f'{start:%A, %B} {start.day} · {start:%-I:%M %p}',
+        'end': end.isoformat(),
+        'cancelled': e.is_cancelled,
+        'past': end < timezone.now(),
+        'price_line': 'Free' if e.price_type == 'Free' else (f'${e.price_amount:.0f}' if e.price_amount else ''),
+        'what_to_bring': e.what_to_bring or [],
+        'who_can_join': e.who_can_join,
+        'leader_person': person(e.leader, request) if e.leader_id and e.leader_id not in blocked else None,
+        'club': {'id': e.club.id, 'name': e.club.name, 'initials': e.club.initials, 'color': e.club.color}
+        if e.club_id else None,
+        'route': {'id': route.id, 'name': route.name, 'distance': route.distance_m,
+                  'elevation_gain': route.elevation_gain_m} if route else None,
+        'attendees': [person(u, request) for u in going[:30]],
+        # Members in the ride chat: only people who are going.
+        'chat': chat.id if chat and card['i_going'] else None,
+        'host_line': (f'Hosted by {placement.account.name}' + (' · Verified business' if placement.account.verified
+                                                                else '')) if placement else '',
+    })
+    return card
 
 
 PACE_LABELS = {'social': 'social pace', 'steady': 'steady pace', 'fast': 'fast pace'}

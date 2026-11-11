@@ -34,6 +34,11 @@ def _bad(code, message, http=status.HTTP_400_BAD_REQUEST):
     return Response({'code': code, 'message': message}, status=http)
 
 
+def saved_routes(user):
+    """Saved Routes on You and the Saved chip: the same list and count."""
+    return visible_routes(user).filter(saves__user=user)
+
+
 def visible_routes(user):
     clubs = ClubMembership.objects.filter(user=user).values('club_id')
     return Route.objects.filter(Q(owner=user) | Q(visibility='public') | Q(visibility='club', club_id__in=clubs))
@@ -88,7 +93,7 @@ class RoutesView(APIView):
         if f == 'under5':
             qs = qs.filter(distance_m__lt=5 * MI)
         elif f == 'saved':
-            qs = qs.filter(saves__user=user)
+            qs = qs.filter(id__in=saved_routes(user).values('id'))
         q = (request.query_params.get('q') or '').strip()
         if q:
             qs = qs.filter(name__icontains=q)
@@ -131,6 +136,8 @@ class RoutesView(APIView):
         r = Route.objects.create(owner=user, club=club, name=name[:120], best_for=best_for, line=line,
                                  waypoints=pts, distance_m=line_distance(line), elevation_gain_m=gain,
                                  is_loop=is_loop, visibility=visibility)
+        # Your own routes start in Saved (You > Saved Routes, the Saved chip).
+        RouteSave.objects.get_or_create(user=user, route=r)
         return Response(route_card(r, user, request), status=status.HTTP_201_CREATED)
 
 

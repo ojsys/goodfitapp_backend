@@ -148,6 +148,12 @@ class Activity(models.Model):
     def save(self, *args, **kwargs):
         """Override save to update user stats"""
         is_new = self.pk is None
+        # Totals (season, training, challenges) sum moving_time: activities
+        # logged without one count their duration.
+        if self.moving_time is None and self.duration:
+            self.moving_time = self.duration * 60
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields'] = {*kwargs['update_fields'], 'moving_time'}
         super().save(*args, **kwargs)
 
         if is_new:

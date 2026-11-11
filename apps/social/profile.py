@@ -98,7 +98,7 @@ class MyProfileView(APIView):
         u = request.user
         mine = Activity.objects.filter(user=u)
         recent = mine.order_by('-start_time')[:3]
-        from apps.routes.models import RouteSave
+        from apps.routes.views import saved_routes
         return Response({
             'person': person(u, request),
             'neighborhood': u.neighborhood,
@@ -107,7 +107,7 @@ class MyProfileView(APIView):
             **_counts(u),
             'season': season(mine, u),
             'training': training(u),
-            'saved_routes': RouteSave.objects.filter(user=u).count(),
+            'saved_routes': saved_routes(u).count(),
             'challenge': _top_challenge(u, request),
             'trophies': _trophies(u),
             'match': {'show': u.match_opted_in, 'new_today': new_today(u) if u.match_opted_in else 0},

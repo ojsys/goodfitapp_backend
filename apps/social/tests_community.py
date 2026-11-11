@@ -206,3 +206,55 @@ class RoutesTests(Base):
         self.assertEqual(card['club_mates_this_week'], 1)
         self.assertEqual(card['riders'], 1)
         self.assertEqual(card['used_by_event']['title'], 'Sunday Social Ride')
+
+
+class DetailsTests(Base):
+    """Small things members see: event details, Saved Routes."""
+
+    def test_own_routes_count_as_saved(self):
+        c = self.client_for(self.me)
+        r = c.post('/api/routes/', {'name': 'Morning loop', 'waypoints': LOOP[:4], 'best_for': 'ride'},
+                   format='json')
+        self.assertEqual(r.status_code, 201, r.data)
+        self.assertTrue(r.data['saved'])
+        self.assertEqual(c.get('/api/social/me/profile/').data['saved_routes'], 1)
+        self.assertEqual([x['id'] for x in c.get('/api/routes/?filter=saved').data['items']], [r.data['id']])
+        # A saved route someone made private again leaves both the list and the count.
+        theirs = Route.objects.create(owner=self.friend, name='Their loop', line=LOOP, distance_m=5000)
+        c.post(f'/api/routes/{theirs.id}/save/')
+        self.assertEqual(c.get('/api/social/me/profile/').data['saved_routes'], 2)
+        theirs.visibility = 'me'
+        theirs.save()
+        self.assertEqual(c.get('/api/social/me/profile/').data['saved_routes'], 1)
+        self.assertEqual(len(c.get('/api/routes/?filter=saved').data['items']), 1)
+
+    def test_event_detail(self):
+        club = Club.objects.create(name='GoodCo Bike Club', initials='GC')
+        ClubMembership.objects.create(club=club, user=self.friend)
+        route = Route.objects.create(owner=self.friend, name='Prospect Park Loop', line=LOOP, distance_m=5470)
+        e = event(self.friend, route=route, leader=self.friend, club=club)
+        Event.objects.filter(pk=e.pk).update(description='Coffee after.')
+        c = self.client_for(self.me)
+        d = c.get(f'/api/social/events/{e.id}/').data
+        self.assertEqual(d['title'], 'Sunday Social Ride')
+        self.assertEqual(d['description'], 'Coffee after.')
+        self.assertEqual(d['route']['name'], 'Prospect Park Loop')
+        self.assertEqual(d['leader_person']['id'], self.friend.id)
+        self.assertIsNone(d['chat'])  # not going yet
+        self.assertFalse(d['cancelled'])
+        c.post(f'/api/events/{e.id}/rsvp/', {'status': 'going'}, format='json')
+        d = c.get(f'/api/social/events/{e.id}/').data
+        self.assertTrue(d['i_going'])
+        self.assertIsNotNone(d['chat'])
+        self.assertIn(self.me.id, [p['id'] for p in d['attendees']])
+        # Cancelled rides still open (from the "cancelled" notification).
+        e.is_cancelled = True
+        e.save()
+        self.assertTrue(c.get(f'/api/social/events/{e.id}/').data['cancelled'])
+
+    def test_event_detail_hidden_like_browse(self):
+        club = Club.objects.create(name='Private Club', initials='PC')
+        e = event(self.friend, club=club, who_can_join='club')
+        self.assertEqual(self.client_for(self.me).get(f'/api/social/events/{e.id}/').status_code, 404)
+        ClubMembership.objects.create(club=club, user=self.me)
+        self.assertEqual(self.client_for(self.me).get(f'/api/social/events/{e.id}/').status_code, 200)
